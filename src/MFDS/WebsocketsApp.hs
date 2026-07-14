@@ -18,6 +18,7 @@ import Data.List qualified as List
 import Data.Map qualified as Map
 import Data.Void
 import Network.WebSockets qualified as WS
+import System.Environment
 import Text.Megaparsec.Char (space)
 import Text.Megaparsec.Char.Lexer (decimal, signed)
 
@@ -59,8 +60,9 @@ renderCallSign' = Text.justifyRight 4 '0' . renderCallSign
 
 runWebsocketServer :: IO ()
 runWebsocketServer = do
+  port <- read @Int <$> getEnv "WEBSOCKET_SERVER_PORT"
   state <- newMVar initialState
-  WS.runServer "127.0.0.1" 9160 $ runChat state
+  WS.runServer "127.0.0.1" port $ runChat state
 
 runChat :: MVar ServerState -> WS.ServerApp
 runChat state pending = do
