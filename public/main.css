@@ -37,6 +37,12 @@ main {
   grid-template-columns: 15em 1fr;
   grid-template-rows: auto 1fr 3em 3em;
   background-color: black;
+
+  &.read-only {
+    grid-template-areas: "hdr" "vwr";
+    grid-template-columns: 1fr;
+    grid-template-rows: 1fr;
+  }
 }
 
 .sidebar {

@@ -576,4 +576,11 @@ window.onload = () => {
       doSendMessage();
     }
   });
+
+  // Go into read-only mode
+  const params = new URLSearchParams(window.location.search);
+  if (params.has("read-only")) {
+    $("main").classList.add("read-only");
+  }
+
 }
