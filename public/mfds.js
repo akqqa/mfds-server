@@ -16,7 +16,6 @@ let manualCallSign = false;
 let dictOrd = [];
 let dict = {};
 
-
 //**************************************************//
 // SOUNDS
 
@@ -64,7 +63,7 @@ const setMute = (m) => {
 }
 
 const initialiseMute = () => {
-  wasMuted = localStorage.getItem("mute");
+  const wasMuted = localStorage.getItem("mute");
   if (wasMuted === true) {
     setMute(true);
   }
@@ -111,15 +110,11 @@ const updateDict = () => {
   const dictView = $(".dict-view-content");
   dictView.innerHTML = "";
 
-  dictView.innerHTML = `
-    <table>
-    <tbody>
-    ${dictOrd.map(({ key, value }) => {
+  const rows = dictOrd.map(({ key, value }) => {
     return `<tr><td> ${key}</td><td>${value} </td>`;
-  }).join("")}
-    </tbody>
-    </table>
-  `;
+  }).join("");
+
+  dictView.innerHTML = `<table><tbody>${rows}</tbody></table>`;
 
   // Update stored dict
   localStorage.setItem("dict", JSON.stringify(dictOrd));
@@ -298,9 +293,6 @@ const doTranslation = () => {
       })
       .join("");
 
-    // newText = decodeEntities(newText);
-    console.log(newText);
-
     el.innerHTML = newText;
     const rawText = el.textContent;
 
@@ -371,17 +363,17 @@ const renderMessage = (sender, message) => {
       el.appendChild(sceneDiv);
 
       const scene = new THREE.Scene();
-      const camera = new THREE.PerspectiveCamera(50, 400/300, 0.1, 2000);
+      const camera = new THREE.PerspectiveCamera(50, 400 / 300, 0.1, 2000);
       camera.position.z = 15;
 
       const renderer = new THREE.WebGLRenderer();
       renderer.setSize(400, 300);
       sceneDiv.appendChild(renderer.domElement);
-      const composer = new EffectComposer( renderer );
+      const composer = new EffectComposer(renderer);
       const renderPixelatedPass = new RenderPixelatedPass(4, scene, camera);
-      composer.addPass( renderPixelatedPass );
+      composer.addPass(renderPixelatedPass);
 
-      const light = new THREE.AmbientLight(0xffffff,2);
+      const light = new THREE.AmbientLight(0xffffff, 2);
       scene.add(light);
 
       const bottomGrid = new THREE.GridHelper(25, 4, 0x246E1A, 0x246E1A);
@@ -392,30 +384,30 @@ const renderMessage = (sender, message) => {
       scene.add(bottomGrid);
       scene.add(topGrid);
 
-      sphereData.forEach(([x,y,z,volume,colour]) => {
-        let radius = Math.cbrt(0.75*(volume/Math.PI))
+      sphereData.forEach(([x, y, z, volume, colour]) => {
+        let radius = Math.cbrt(0.75 * (volume / Math.PI))
         const sphere = new THREE.SphereGeometry(radius);
         // map the colour - 0-48 is 0-260
         let c;
         if (colour < 48) {
           // Use hsl hue
-          let hue = colour/48*280;
+          let hue = colour / 48 * 280;
           c = new THREE.Color(`hsl(${hue},100%,50%)`)
         } else {
           // use hsl lightness
-          let value = 100 - (64-colour)/16*80
+          let value = 100 - (64 - colour) / 16 * 80
           console.log("greyscale" + value)
           c = new THREE.Color(`hsl(0,0%,${value}%)`)
         }
         const mat = new THREE.MeshStandardMaterial();
-        mat.color=c;
+        mat.color = c;
         const mesh = new THREE.Mesh(sphere, mat);
         mesh.position.set(x, z, y); // Alien coords!
         scene.add(mesh);
       })
 
       const controls = new OrbitControls(camera, renderer.domElement);
-        
+
       function animate(time) {
         controls.update();
         composer.render(scene, camera);
@@ -549,7 +541,7 @@ const parseText = (text) => {
 
   // Must be no invalid signals
   if (invalid.length === 0) {
-    // Max length 
+    // Max length
     const maxSignals = 500;
     if (signals.length <= 500) {
       return signals;
@@ -573,53 +565,47 @@ const parseText = (text) => {
 
 // Returns the spheredata in a nicer format for rendering
 const parseSphereData = (message) => {
-  // CHECK IF RENDER IN DICTIONARY
+  // If the user doesn't know signal 53, they shouldn't see pictures
   if (!dict[-53]) {
     return false;
   }
+
   try {
-    if (!message.includes(-53)) { // If no image signal, doesn't contain an image
-    return false;
+    const pictureIndices = message.reduce((acc, x, i) => {
+      if (x == -53)
+        acc.push(i);
+      return x;
+    }, []);
+
+    // If there is not exactly one picture, give up
+    if (pictureIndices.length != 1) {
+      return;
     }
-    if (message.filter(x => x == -53).length > 1) { // If multiple image signals, invalid
+
+    // Get position of -53 signal. It must be followed by signal -14 (open)
+    const imagePos = pictureIndices[0];
+    if (message[imagePos + 1] != -14) {
       return false;
     }
 
-    // Get position of -53 signal
-    const imagePos = message.indexOf(-53);
-    if (message[imagePos+1] != -14 ) {
-      return false;
-    }
+    const closePos = message.indexOf(-15, imagePos + 2);
 
-    // Using a stack, find the final parenthesis
-    // Edit - this is uneccessary lol - forgot theres no inner parentheses, just find next -15. keep cause no reason not to
-    let parens = 1;
-    let finalIndex = -1;
-    for (let i = imagePos+2; i < message.length; i++) {
-      if (message[i] == -14) {
-        parens += 1;
-      } else if (message[i] == -15) {
-        parens -= 1;
-      }
-      if (parens == 0) {
-        finalIndex = i;
-        break;
-      }
-    }
-    if (finalIndex == -1) { // Mismatched brackets around image
+    // If there is no close, give up
+    if (closePos == -1) {
       return false;
     }
 
     // Now we have the start and end of the "image", so we can check everything in between matches the pattern!
     let check = true;
-    let current = imagePos+2;
+    let current = imagePos + 2;
     let allSpheres = [];
     while (check) {
       let currentSphere = [];
       // If not followed by "sphere" then fail
-      if (message[current++] != -52 ) { 
+      if (message[current++] != -52) {
         return false;
       }
+
       // Check for 5 positive numbers that make a sphere
       for (let i = 0; i < 4; i++) {
         let negated = false;
@@ -633,7 +619,7 @@ const parseSphereData = (message) => {
         }
         firstHalf = message[current];
         // Check positive
-        if (message[current++] < 0 ) {
+        if (message[current++] < 0) {
           return false;
         }
         // Check for decimal
@@ -643,7 +629,7 @@ const parseSphereData = (message) => {
 
           secondHalf = message[current];
           // Check next is positive as it is the next number after a decimal
-          if (message[current++] < 0 ) {
+          if (message[current++] < 0) {
             return false;
           }
         }
@@ -661,13 +647,13 @@ const parseSphereData = (message) => {
         } else {
           currentSphere.push(currentNumber);
         }
-        
+
         if (message[current++] != -3) {
           return false;
         }
       }
       // Check final pos number and bracket, also enforce less than 64
-      if (message[current] < 0 || message[current] > 64  ) {
+      if (message[current] < 0 || message[current] > 64) {
         return false;
       }
       currentSphere.push(message[current]);
