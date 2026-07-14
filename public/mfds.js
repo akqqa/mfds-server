@@ -243,10 +243,11 @@ const renderMessage = (sender, message) => {
   el.appendChild(ael);
   el.appendChild(bel);
 
-  if (messageContainsValidImage(message)) {
+  const sphereData = parseSphereData(message)
+  if (sphereData) {
     const cel = document.createElement("button");
     cel.classList.add("imageButton");
-    cel.setAttribute("image-data", stringMessage);
+    cel.setAttribute("image-data", sphereData);
     el.appendChild(cel);
   }
 
@@ -386,18 +387,8 @@ const parseText = (text) => {
 //**************************************************//
 // RENDERING IMAGES
 
-// Make it return the spheredata in a nicer format for rendering?
-const messageContainsValidImage = (message) => {
-  // a valid image is RENDER(SPHEREDATA(1,2,3,4,5), SPHEREDATA(1,2,3,4,5))
-  // MAKE A GRAMMAR!
-  // must start with RENDER (
-  // THEN
-  // base: SPHEREDATA ( Xx , Xx , Xx , Xx , Xx ,) OH WAIT THIS IS EASIER
-  // whats the easiest way to check this?
-  // Need to parse the message for signal -53, followed by -13.
-  // then enforce that the next are spheredata( numbers )
-  // then either a , or a )
-  // etc.
+// Returns the spheredata in a nicer format for rendering
+const parseSphereData = (message) => {
   try {
     if (!message.includes(-53)) { // If no image signal, doesn't contain an image
     return false;
@@ -433,7 +424,9 @@ const messageContainsValidImage = (message) => {
     // Now we have the start and end of the "image", so we can check everything in between matches the pattern!
     let check = true;
     let current = imagePos+2;
+    let allSpheres = []
     while (check) {
+      let currentSphere = [];
       // If not followed by "sphere (" then fail
       if (message[current++] != -52 ) { 
         return false;
@@ -441,8 +434,20 @@ const messageContainsValidImage = (message) => {
       if (message[current++] != -14) {
         return false;
       }
-      // Check for 5 positive numbers
+      // Check for 5 positive numbers that make a sphere
       for (let i = 0; i < 4; i++) {
+        let negated = false;
+        if (message[current] == -1) { // Consumes negation if present for first 3
+          current++;
+          negated = true;
+        }
+        // Put number into the currentSphere array
+        if (negated) {
+          currentSphere.push(0-message[current]);
+        } else {
+          currentSphere.push(message[current]);
+        }
+        // Check positive and comma next
         if (message[current++] < 0 ) {
           return false;
         }
@@ -454,10 +459,12 @@ const messageContainsValidImage = (message) => {
       if (message[current] < 0 || message[current] > 64  ) {
         return false;
       }
+      currentSphere.push(message[current]);
       current++;
       if (message[current++] != -15) {
         return false;
       }
+      allSpheres.push(currentSphere);
       if (message[current] === -3) {
         current++;
         check = true;
@@ -466,7 +473,9 @@ const messageContainsValidImage = (message) => {
       }
     }
 
-    return true;
+    console.log("ALLSPHERES")
+    console.log(allSpheres)
+    return allSpheres;
 
   } catch (error) {
     return false;
