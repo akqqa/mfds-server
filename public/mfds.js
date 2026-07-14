@@ -54,24 +54,28 @@ const updateDict = () => {
 }
 
 const loadDictionary = (text) => {
-  const data = JSON.parse(text);
-  if (!data) {
-    console.error("Could not read dictionary");
-    return;
+  try {
+    const data = JSON.parse(text);
+    dictOrd = data.wordDict.keys.map((x, i) => {
+      return {
+        key: x,
+        value: data.wordDict.values[i]
+      };
+    });
+    descs = Object.fromEntries(data.descDict.keys.map((x, i) =>
+      [x, data.descDict.values[i]]
+    ));
+    dictOrd = dictOrd.map(x => ({ ...x, desc: descs[x.key] }));
+
+    updateDict();
   }
 
-  dictOrd = data.wordDict.keys.map((x, i) => {
-    return {
-      key: x,
-      value: data.wordDict.values[i]
-    };
-  });
-  descs = Object.fromEntries(data.descDict.keys.map((x, i) =>
-    [x, data.descDict.values[i]]
-  ));
-  dictOrd = dictOrd.map(x => ({ ...x, desc: descs[x.key] }));
+  catch (e) {
+    console.error("Could not read dictionary");
 
-  updateDict();
+    renderErrorMessage("Could not read dictionary: " + e.message);
+  }
+
 }
 
 const initialiseDict = () => {
