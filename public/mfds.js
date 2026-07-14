@@ -269,7 +269,8 @@ const doTranslation = () => {
             let p = "";
             if (i > 0) {
               const prev = dict[str[i - 1]];
-              if (entry.desc.formatMode > 0 || prev?.desc.formatModeAfter > 0 || !prev) {
+              const wasUndef = (str[i - 1] < 0 && !prev);
+              if (entry.desc.formatMode > 0 || prev?.desc.formatModeAfter > 0 || wasUndef) {
                 p = `<span class="spacer"> </span>`;
               }
             }
@@ -287,9 +288,9 @@ const doTranslation = () => {
         }
         else {
           const prev = dict[str[i - 1]];
-          console.log(x, prev?.desc)
+          const wasUndef = (str[i - 1] < 0 && !prev);
           let p = "";
-          if (prev?.desc.formatModeAfter > 0 || !prev) {
+          if (prev?.desc.formatModeAfter > 0 || wasUndef) {
             p = `<span class="spacer"> </span>`;
           }
           return `${p}<span class="signal number">${x}</span>`;
