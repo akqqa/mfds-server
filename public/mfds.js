@@ -11,12 +11,56 @@ let manualCallSign = false;
 let dictOrd = [];
 let dict = {};
 
+
+//**************************************************//
+// SOUNDS
+
 const snd_click = new Audio("sounds/click_ping.wav");
 const snd_recv = new Audio("sounds/zap_down_quick.wav");
 const snd_send = new Audio("sounds/zap_digi_up.wav");
 // Only play receiving sounds after a certain time to avoid the history
 // causing a big load to arrive at once
 let receive_sounds_after = new Date();
+
+let muted = false;
+
+const play = (snd) => {
+  if (muted) return;
+  snd.play();
+}
+
+const toggleMute = () => {
+  setMute(!muted);
+}
+
+const setMute = (m) => {
+  muted = m;
+
+  const muteIcon = $("#mute .fa");
+
+  if (!muteIcon) {
+    console.error("Can't find mute icon");
+    return;
+  }
+
+  if (muted) {
+    muteIcon.classList.remove("fa-volume-up")
+    muteIcon.classList.add("fa-volume-off");
+  }
+  else {
+    muteIcon.classList.remove("fa-volume-off");
+    muteIcon.classList.add("fa-volume-up");
+  }
+
+  localStorage.setItem("mute", m);
+}
+
+const initialiseMute = () => {
+  wasMuted = localStorage.getItem("mute");
+  if (wasMuted === true) {
+    setMute(true);
+  }
+}
 
 //**************************************************//
 // DICTIONARY
@@ -475,7 +519,7 @@ window.onload = () => {
         renderMessage(sender, message);
 
         if (sender !== callSign && Date.now() > receive_sounds_after) {
-          snd_recv.play();
+          play(snd_recv);
         }
 
         break;
@@ -489,7 +533,7 @@ window.onload = () => {
       if (val === 7) newVal = 0;
       else newVal = val + 1;
       setDigitValue(elem.parentNode, newVal);
-      snd_click.play();
+      play(snd_click);
     })
   });
 
@@ -500,7 +544,7 @@ window.onload = () => {
       if (val === 0) newVal = 7;
       else newVal = val - 1;
       setDigitValue(elem.parentNode, newVal);
-      snd_click.play();
+      play(snd_click);
     })
   });
 
@@ -598,7 +642,7 @@ window.onload = () => {
         // Clear message
         $("#message-input").value = "";
         // Play sound
-        snd_send.play();
+        play(snd_send);
       }
     }
   }
@@ -618,5 +662,11 @@ window.onload = () => {
   if (params.has("read-only")) {
     $("main").classList.add("read-only");
   }
+
+  initialiseMute();
+
+  $("#mute").addEventListener("click", () => {
+    toggleMute();
+  });
 
 }
