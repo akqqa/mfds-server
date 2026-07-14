@@ -454,10 +454,10 @@ window.onload = () => {
         // Call sign in use
 
         if (manualCallSign) {
-          renderErrorMessage(`Call sign ${unconfirmedCallSign} in use`);
+          renderErrorMessage(`Call sign ${renderCallSign(unconfirmedCallSign)} in use`);
         }
         else {
-          renderErrorMessage(`Call sign ${unconfirmedCallSign} in use; randomizing...`);
+          renderErrorMessage(`Call sign ${renderCallSign(unconfirmedCallSign)} in use; randomizing...`);
           randomizeCallSign();
           socket.send(`S,${unconfirmedCallSign}`);
         }
