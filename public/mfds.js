@@ -323,11 +323,21 @@ const parseText = (text) => {
       continue;
     }
 
+    // Raw signal in the form @-100 or @5
+    if (text[ix] === "@") {
+      const numStr = text.slice(ix + 1).match(/^-?\d+/)?.[0];
+      if (numStr) {
+        const num = parseInt(numStr, 10);
+        signals.push(num);
+        ix += numStr.length + 1;
+        continue;
+      }
+    }
+
     // Try matching a nonnegative integer
     // ... in base 10 :(
     const numStr = text.slice(ix).match(/^\d+/)?.[0];
     if (numStr) {
-      console.log(numStr);
       const num = parseInt(numStr, 10);
       signals.push(num);
       ix += numStr.length;
