@@ -226,6 +226,8 @@ const doTranslation = () => {
 
 const renderMessage = (sender, message) => {
 
+  const stringMessage = JSON.stringify(message);
+
   const el = document.createElement("div");
   el.classList.add("message");
 
@@ -236,10 +238,18 @@ const renderMessage = (sender, message) => {
 
   const bel = document.createElement("span");
   bel.classList.add("message-body", "do-translate");
-  bel.setAttribute("data-original", JSON.stringify(message));
+  bel.setAttribute("data-original", stringMessage);
 
   el.appendChild(ael);
   el.appendChild(bel);
+
+  if (messageContainsValidImage(message)) {
+    const cel = document.createElement("button");
+    cel.classList.add("imageButton");
+    cel.setAttribute("image-data", stringMessage);
+    el.appendChild(cel);
+  }
+
   $("#all-messages").appendChild(el);
 
   // Scroll to bottom
@@ -371,6 +381,13 @@ const parseText = (text) => {
     renderErrorMessage(invalidStr);
     return null;
   }
+}
+
+//**************************************************//
+// RENDERING IMAGES
+
+const messageContainsValidImage = (message) => {
+  return true;
 }
 
 //**************************************************//
