@@ -192,7 +192,10 @@ const doTranslation = () => {
           }
           else {
             // UNDEF is always rendered with a space
-            p = `<span class="spacer"> </span>`;
+            let p = "";
+            if (i > 0) {
+              p = `<span class="spacer"> </span>`;
+            }
             return `${p}<span class="signal undef">@${x}_UNDEF</span>`;
           }
         }
