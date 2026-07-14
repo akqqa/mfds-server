@@ -323,8 +323,8 @@ const parseText = (text) => {
       continue;
     }
 
-    // Raw signal in the form @-100 or @5
-    if (text[ix] === "@") {
+    // Raw signal in the form |-100 or |5
+    if (text[ix] === "|") {
       const numStr = text.slice(ix + 1).match(/^-?\d+/)?.[0];
       if (numStr) {
         const num = parseInt(numStr, 10);
