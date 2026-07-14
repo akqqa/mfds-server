@@ -52,6 +52,9 @@ const setMute = (m) => {
     muteIcon.classList.add("fa-volume-up");
   }
 
+  // To prove the point, this should only actually make a sound on *unmute*
+  play(snd_click);
+
   localStorage.setItem("mute", m);
 }
 
@@ -59,6 +62,40 @@ const initialiseMute = () => {
   wasMuted = localStorage.getItem("mute");
   if (wasMuted === true) {
     setMute(true);
+  }
+}
+
+//**************************************************//
+// THEME
+
+let theme = 0;
+
+const themeColors = ["#66aa00", "#b6a8e5", "#c49b9b", "#b1d6e9", "#ccc", "#fffb00", "#4f4f85", "#ff9538"];
+
+const changeTheme = () => {
+  let newTheme;
+  if (theme == themeColors.length - 1)
+    newTheme = 0;
+  else
+    newTheme = theme + 1;
+
+  setTheme(newTheme);
+}
+
+setTheme = (t) => {
+  console.log(`New theme is theme ${t}`);
+  theme = t;
+  const root = $(":root");
+  root.style.setProperty("--theme-color", themeColors[theme]);
+  localStorage.setItem("theme", theme);
+}
+
+const initialiseTheme = () => {
+  const ot = localStorage.getItem("theme");
+  const oldTheme = parseInt(ot);
+  if (oldTheme >= 0) {
+    console.log("THEME", ot, oldTheme);
+    setTheme(oldTheme);
   }
 }
 
@@ -663,10 +700,16 @@ window.onload = () => {
     $("main").classList.add("read-only");
   }
 
+  // Setup muting/unmuting
   initialiseMute();
-
   $("#mute").addEventListener("click", () => {
     toggleMute();
+  });
+
+  // Setup theme and changing theme
+  initialiseTheme();
+  $("#retheme").addEventListener("click", () => {
+    changeTheme();
   });
 
 }
