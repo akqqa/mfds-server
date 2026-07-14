@@ -387,7 +387,63 @@ const parseText = (text) => {
 // RENDERING IMAGES
 
 const messageContainsValidImage = (message) => {
-  return true;
+  // a valid image is RENDER(SPHEREDATA(1,2,3,4,5), SPHEREDATA(1,2,3,4,5))
+  // MAKE A GRAMMAR!
+  // must start with RENDER (
+  // THEN
+  // base: SPHEREDATA ( Xx , Xx , Xx , Xx , Xx ,) OH WAIT THIS IS EASIER
+  // whats the easiest way to check this?
+  // Need to parse the message for signal -53, followed by -13.
+  // then enforce that the next are spheredata( numbers )
+  // then either a , or a )
+  // etc.
+  try {
+    if (!message.includes(-53)) { // If no image signal, doesn't contain an image
+    return false;
+    }
+    if (message.filter(x => x == -53).length > 1) { // If multiple image signals, invalid
+      return false;
+    }
+
+    // Get position of -53 signal
+    const imagePos = message.indexOf(-53);
+    if (message[imagePos+1] != -14 ) {
+      return false;
+    }
+
+    // Using a stack, find the final parenthesis
+    let parens = 1;
+    let finalIndex = -1;
+    for (let i = imagePos+2; i < message.length; i++) {
+      if (message[i] == -14) {
+        parens += 1;
+      } else if (message[i] == -15) {
+        parens -= 1;
+      }
+      if (parens == 0) {
+        finalIndex = i;
+        break;
+      }
+    }
+    if (finalIndex == -1) { // Mismatched brackets around image
+      return false;
+    }
+
+    // Now we have the start and end of the "image", so we can check everything in between matches the pattern!
+    let check = true;
+    while (check) {
+      check = false;
+    }
+
+    return true;
+
+  } catch (error) {
+    return false;
+  }
+  
+
+
+
 }
 
 //**************************************************//
