@@ -573,6 +573,10 @@ const parseText = (text) => {
 
 // Returns the spheredata in a nicer format for rendering
 const parseSphereData = (message) => {
+  // CHECK IF RENDER IN DICTIONARY
+  if (!dict[-53]) {
+    return false;
+  }
   try {
     if (!message.includes(-53)) { // If no image signal, doesn't contain an image
     return false;
@@ -588,7 +592,7 @@ const parseSphereData = (message) => {
     }
 
     // Using a stack, find the final parenthesis
-    // Edit - this is uneccessary lol - forgot theres no inner parentheses, just find next -15
+    // Edit - this is uneccessary lol - forgot theres no inner parentheses, just find next -15. keep cause no reason not to
     let parens = 1;
     let finalIndex = -1;
     for (let i = imagePos+2; i < message.length; i++) {
