@@ -361,7 +361,7 @@ let socket;
 window.onload = () => {
   console.log("Opening websocket connection...")
 
-  socket = new WebSocket(`wss://${window.location.host}:9160`);
+  socket = new WebSocket(`wss://dscr-relay.dixonary.co.uk`);
   socket.addEventListener("open", () => {
     console.log("connected");
     socket.send(`S,${unconfirmedCallSign}`)
