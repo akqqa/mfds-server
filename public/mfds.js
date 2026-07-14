@@ -386,6 +386,7 @@ const parseText = (text) => {
 //**************************************************//
 // RENDERING IMAGES
 
+// Make it return the spheredata in a nicer format for rendering?
 const messageContainsValidImage = (message) => {
   // a valid image is RENDER(SPHEREDATA(1,2,3,4,5), SPHEREDATA(1,2,3,4,5))
   // MAKE A GRAMMAR!
@@ -431,8 +432,38 @@ const messageContainsValidImage = (message) => {
 
     // Now we have the start and end of the "image", so we can check everything in between matches the pattern!
     let check = true;
+    let current = imagePos+2;
     while (check) {
-      check = false;
+      // If not followed by "sphere (" then fail
+      if (message[current++] != -52 ) { 
+        return false;
+      }
+      if (message[current++] != -14) {
+        return false;
+      }
+      // Check for 5 positive numbers
+      for (let i = 0; i < 4; i++) {
+        if (message[current++] < 0 ) {
+          return false;
+        }
+        if (message[current++] != -3) {
+          return false;
+        }
+      }
+      // Check final pos number and bracket, also enforce less than 64
+      if (message[current] < 0 || message[current] > 64  ) {
+        return false;
+      }
+      current++;
+      if (message[current++] != -15) {
+        return false;
+      }
+      if (message[current] === -3) {
+        current++;
+        check = true;
+      } else {
+        check = false;
+      }
     }
 
     return true;
