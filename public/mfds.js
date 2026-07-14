@@ -10,6 +10,13 @@ let activeCallSigns = null;
 let dictOrd = [];
 let dict = {};
 
+const snd_click = new Audio("sounds/click_ping.wav");
+const snd_recv = new Audio("sounds/zap_down_quick.wav");
+const snd_send = new Audio("sounds/zap_digi_up.wav");
+// Only play receiving sounds after a certain time to avoid the history
+// causing a big load to arrive at once
+let receive_sounds_after = new Date();
+
 //**************************************************//
 // DICTIONARY
 
@@ -364,8 +371,12 @@ window.onload = () => {
   socket = new WebSocket(`wss://dscr-relay.dixonary.co.uk`);
   socket.addEventListener("open", () => {
     console.log("connected");
-    socket.send(`S,${unconfirmedCallSign}`)
+    socket.send(`S,${unconfirmedCallSign}`);
+
+    // Prevent message-received sounds for the first 5 seconds
+    receive_sounds_after = Date.now() + 5;
   })
+
   socket.addEventListener("message", (ev) => {
     content = ev.data.split(",");
     console.log("RECEIVED: " + content);
@@ -415,6 +426,10 @@ window.onload = () => {
 
         renderMessage(sender, message);
 
+        if (sender !== callSign && Date.now() > receive_sounds_after) {
+          snd_recv.play();
+        }
+
         break;
     }
   });
@@ -426,6 +441,7 @@ window.onload = () => {
       if (val === 7) newVal = 0;
       else newVal = val + 1;
       setDigitValue(elem.parentNode, newVal);
+      snd_click.play();
     })
   });
 
@@ -436,6 +452,7 @@ window.onload = () => {
       if (val === 0) newVal = 7;
       else newVal = val - 1;
       setDigitValue(elem.parentNode, newVal);
+      snd_click.play();
     })
   });
 
@@ -531,6 +548,8 @@ window.onload = () => {
         socket.send(msg);
         // Clear message
         $("#message-input").value = "";
+        // Play sound
+        snd_send.play();
       }
     }
   }
