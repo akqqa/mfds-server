@@ -302,11 +302,11 @@ const renderMessage = (sender, message) => {
         // map the colour - 0-48 is 0-260
         let c;
         if (colour < 48) {
-          // Use hsl
+          // Use hsl hue
           let hue = colour/48*280;
           c = new THREE.Color(`hsl(${hue},100%,50%)`)
         } else {
-          // use rgb
+          // use hsl lightness
           let value = 100 - (64-colour)/16*80
           console.log("greyscale" + value)
           c = new THREE.Color(`hsl(0,0%,${value}%)`)
