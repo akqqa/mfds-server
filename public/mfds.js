@@ -111,15 +111,11 @@ const updateDict = () => {
   const dictView = $(".dict-view-content");
   dictView.innerHTML = "";
 
-  dictView.innerHTML = `
-    <table>
-    <tbody>
-    ${dictOrd.map(({ key, value }) => {
+  const rows = dictOrd.map(({ key, value }) => {
     return `<tr><td> ${key}</td><td>${value} </td>`;
-  }).join("")}
-    </tbody>
-    </table>
-  `;
+  }).join("");
+
+  dictView.innerHTML = `<table><tbody>${rows}</tbody></table>`;
 
   // Update stored dict
   localStorage.setItem("dict", JSON.stringify(dictOrd));
@@ -297,9 +293,6 @@ const doTranslation = () => {
         }
       })
       .join("");
-
-    // newText = decodeEntities(newText);
-    console.log(newText);
 
     el.innerHTML = newText;
     const rawText = el.textContent;
@@ -591,21 +584,7 @@ const parseSphereData = (message) => {
       return false;
     }
 
-    // Using a stack, find the final parenthesis
-    // Edit - this is uneccessary lol - forgot theres no inner parentheses, just find next -15. keep cause no reason not to
-    let parens = 1;
-    let finalIndex = -1;
-    for (let i = imagePos + 2; i < message.length; i++) {
-      if (message[i] == -14) {
-        parens += 1;
-      } else if (message[i] == -15) {
-        parens -= 1;
-      }
-      if (parens == 0) {
-        finalIndex = i;
-        break;
-      }
-    }
+    const finalIndex = message.indexOf(-15, imagePos + 2);
     if (finalIndex == -1) { // Mismatched brackets around image
       return false;
     }
