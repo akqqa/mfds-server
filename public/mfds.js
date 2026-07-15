@@ -64,7 +64,7 @@ const setMute = (m) => {
 }
 
 const initialiseMute = () => {
-  wasMuted = localStorage.getItem("mute");
+  const wasMuted = localStorage.getItem("mute");
   if (wasMuted === true) {
     setMute(true);
   }
@@ -111,15 +111,11 @@ const updateDict = () => {
   const dictView = $(".dict-view-content");
   dictView.innerHTML = "";
 
-  dictView.innerHTML = `
-    <table>
-    <tbody>
-    ${dictOrd.map(({ key, value }) => {
+  const rows = dictOrd.map(({ key, value }) => {
     return `<tr><td> ${key}</td><td>${value} </td>`;
-  }).join("")}
-    </tbody>
-    </table>
-  `;
+  }).join("");
+
+  dictView.innerHTML = `<table><tbody>${rows}</tbody></table>`;
 
   // Update stored dict
   localStorage.setItem("dict", JSON.stringify(dictOrd));
@@ -298,9 +294,6 @@ const doTranslation = () => {
       })
       .join("");
 
-    // newText = decodeEntities(newText);
-    console.log(newText);
-
     el.innerHTML = newText;
     const rawText = el.textContent;
 
@@ -375,16 +368,15 @@ const renderMessage = (sender, message) => {
       camera.position.x = -18.5;
       const light = new THREE.DirectionalLight(0xffffff, 10000);
       camera.add(light);
-
       const renderer = new THREE.WebGLRenderer();
       renderer.setSize(400, 300);
       sceneDiv.appendChild(renderer.domElement);
-      const composer = new EffectComposer( renderer );
+      const composer = new EffectComposer(renderer);
       const renderPixelatedPass = new RenderPixelatedPass(4, scene, camera);
-      composer.addPass( renderPixelatedPass );
+      composer.addPass(renderPixelatedPass);
 
-      const light2 = new THREE.AmbientLight(0xffffff,2);
-      scene.add(light2);
+      const light = new THREE.AmbientLight(0xffffff, 2);
+      scene.add(light);
 
       const bottomGrid = new THREE.GridHelper(30, 4, 0x13831F, 0x246E1A);
       bottomGrid.position.y = -8;
@@ -399,14 +391,14 @@ const renderMessage = (sender, message) => {
         // map the color - using the key levels apples described to match the game and interpolatee between
         let c = calculateColor(color);
         const mat = new THREE.MeshStandardMaterial();
-        mat.color=c;
+        mat.color = c;
         const mesh = new THREE.Mesh(sphere, mat);
         mesh.position.set(x, z, y); // Alien coords!
         scene.add(mesh);
       })
 
       const controls = new OrbitControls(camera, renderer.domElement);
-        
+
       function animate(time) {
         controls.update();
         composer.render(scene, camera);
@@ -570,7 +562,7 @@ const parseSphereData = (message) => {
   }
   try {
     if (!message.includes(-53)) { // If no image signal, doesn't contain an image
-    return false;
+      return false;
     }
     if (message.filter(x => x == -53).length > 1) { // If multiple image signals, invalid
       return false;
@@ -578,37 +570,23 @@ const parseSphereData = (message) => {
 
     // Get position of -53 signal
     const imagePos = message.indexOf(-53);
-    if (message[imagePos+1] != -14 ) {
+    if (message[imagePos + 1] != -14) {
       return false;
     }
 
-    // Using a stack, find the final parenthesis
-    // Edit - this is uneccessary lol - forgot theres no inner parentheses, just find next -15. keep cause no reason not to
-    let parens = 1;
-    let finalIndex = -1;
-    for (let i = imagePos+2; i < message.length; i++) {
-      if (message[i] == -14) {
-        parens += 1;
-      } else if (message[i] == -15) {
-        parens -= 1;
-      }
-      if (parens == 0) {
-        finalIndex = i;
-        break;
-      }
-    }
+    const finalIndex = message.indexOf(-15, imagePos + 2);
     if (finalIndex == -1) { // Mismatched brackets around image
       return false;
     }
 
     // Now we have the start and end of the "image", so we can check everything in between matches the pattern!
     let check = true;
-    let current = imagePos+2;
+    let current = imagePos + 2;
     let allSpheres = [];
     while (check) {
       let currentSphere = [];
       // If not followed by "sphere" then fail
-      if (message[current++] != -52 ) { 
+      if (message[current++] != -52) {
         return false;
       }
       // Check for 5 positive numbers that make a sphere
@@ -624,7 +602,7 @@ const parseSphereData = (message) => {
         }
         firstHalf = message[current];
         // Check positive
-        if (message[current++] < 0 ) {
+        if (message[current++] < 0) {
           return false;
         }
         // Check for decimal
@@ -634,7 +612,7 @@ const parseSphereData = (message) => {
 
           secondHalf = message[current];
           // Check next is positive as it is the next number after a decimal
-          if (message[current++] < 0 ) {
+          if (message[current++] < 0) {
             return false;
           }
         }
@@ -652,13 +630,13 @@ const parseSphereData = (message) => {
         } else {
           currentSphere.push(currentNumber);
         }
-        
+
         if (message[current++] != -3) {
           return false;
         }
       }
       // Check final pos number and bracket, also enforce less than 64
-      if (message[current] < 0 || message[current] > 64  ) {
+      if (message[current] < 0 || message[current] > 64) {
         return false;
       }
       currentSphere.push(message[current]);

@@ -25,10 +25,11 @@ import Text.Megaparsec.Char.Lexer (decimal, signed)
 data ServerState = ServerState
   { clients :: Map CallSign WS.Connection
   , messages :: [Message]
+  , nextMessageNumber :: Int
   }
 
 initialState :: ServerState
-initialState = ServerState (Map.empty) []
+initialState = ServerState (Map.empty) [] 0
 
 newtype CallSign = CallSign {fromCallSign :: Int}
   deriving (Eq, Ord)
@@ -37,6 +38,7 @@ instance Show CallSign where show = Text.unpack . renderCallSign'
 
 data Message = Message
   { author :: CallSign
+  , messageNumber :: Int
   , content :: [Int]
   }
 
@@ -154,20 +156,27 @@ runChat state pending = do
 
   renderMsg :: SendMessage -> Text
   renderMsg = \case
-    Msg (Message{author, content}) ->
+    Msg (Message{author, messageNumber, content}) ->
       mconcat . List.intersperse "," $
-        ["R", renderCallSign author] <> (map (Text.pack . show) content)
+        ["R", renderCallSign author, Text.pack $ show messageNumber]
+          <> (map (Text.pack . show) content)
     CallSignOK n -> "K," <> renderCallSign n
     CallSignInUse n -> "U," <> renderCallSign n
     AllClients clients -> "C," <> mconcat (List.intersperse "," $ map renderCallSign clients)
 
   handleMessage :: [Int] -> CallSign -> IO ()
   handleMessage content cs = do
-    let m = Msg (Message cs content)
-    Text.putStrLn $ renderMsg m
+    mn <- modifyMVar state $ \s@ServerState{nextMessageNumber} -> do
+      pure
+        ( s{nextMessageNumber = (nextMessageNumber + 1) `mod` 512}
+        , nextMessageNumber
+        )
+
+    let m = (Message cs mn content)
+    Text.putStrLn $ renderMsg $ Msg m
     ServerState{clients} <- readMVar state
-    forM_ clients $ send m
-    modifyMVar_ state $ \s@ServerState{messages} -> pure s{messages = Message cs content : take 9 messages}
+    forM_ clients $ send $ Msg m
+    modifyMVar_ state $ \s@ServerState{messages} -> pure s{messages = m : take 9 messages}
 
   sendHistory :: WS.Connection -> IO ()
   sendHistory conn = do
