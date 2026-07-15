@@ -366,8 +366,6 @@ const renderMessage = (sender, message) => {
       const scene = new THREE.Scene();
       const camera = new THREE.PerspectiveCamera(50, 400/300, 0.1, 2000);
       camera.position.x = -18.5;
-      const light = new THREE.DirectionalLight(0xffffff, 10000);
-      camera.add(light);
       const renderer = new THREE.WebGLRenderer();
       renderer.setSize(400, 300);
       sceneDiv.appendChild(renderer.domElement);
