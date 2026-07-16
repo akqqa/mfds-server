@@ -464,9 +464,6 @@ const renderMessage = (sender, sequence, message) => {
       const renderPixelatedPass = new RenderPixelatedPass(4, scene, camera);
       composer.addPass(renderPixelatedPass);
 
-      const light = new THREE.AmbientLight(0xffffff, 2);
-      scene.add(light);
-
       const bottomGrid = new THREE.GridHelper(30, 4, 0x13831F, 0x246E1A);
       bottomGrid.position.y = -8;
       bottomGrid.color
@@ -479,7 +476,37 @@ const renderMessage = (sender, sequence, message) => {
         const sphere = new THREE.SphereGeometry(radius/2);
         // map the color - using the key levels apples described to match the game and interpolatee between
         let c = calculateColor(color);
-        const mat = new THREE.MeshStandardMaterial();
+        // https://medium.com/@aurelienagtn/introduction-to-shaders-with-three-js-create-an-animated-sphere-d4920fbab126
+        const mat = new THREE.ShaderMaterial({
+          vertexShader: `
+            varying vec3 vNormal;
+            varying vec3 vPos;
+            
+            void main() {
+              vPos = position;
+              vNormal = normalize(normal);
+              gl_Position = projectionMatrix * modelViewMatrix * vec4(vPos, 1.0);
+            }
+          `,
+          fragmentShader: `
+            uniform vec3 color3;
+            uniform vec3 lightPos;
+            varying vec3 vNormal;
+            varying vec3 vPos;
+            
+            void main() {
+              vec3 lightDir = normalize(lightPos - vPos);
+              float diff = max(dot(vNormal, lightDir), 0.0);
+              vec3 color = color3 * diff; // White color
+              gl_FragColor = vec4(color, 1.0);
+            }
+          `,
+          uniforms: {
+            color3: {value: c},
+            lightPos: { value: camera.position }
+          }
+        });
+
         mat.color = c;
         const mesh = new THREE.Mesh(sphere, mat);
         mesh.position.set(x, z, y); // Alien coords!
