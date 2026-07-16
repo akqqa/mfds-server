@@ -458,6 +458,7 @@ const renderMessage = (sender, sequence, message) => {
       const camera = new THREE.PerspectiveCamera(50, 400/300, 0.1, 2000);
       camera.position.x = -18.5;
       const renderer = new THREE.WebGLRenderer();
+      renderer.logarithmicDepthBuffer = true;
       renderer.setSize(400, 300);
       sceneDiv.appendChild(renderer.domElement);
       const composer = new EffectComposer(renderer);
@@ -477,41 +478,61 @@ const renderMessage = (sender, sequence, message) => {
         // map the color - using the key levels apples described to match the game and interpolatee between
         let c = calculateColor(color);
         // https://medium.com/@aurelienagtn/introduction-to-shaders-with-three-js-create-an-animated-sphere-d4920fbab126
+        // https://learnopengl.com/code_viewer_gh.php?code=src/2.lighting/2.2.basic_lighting_specular/2.2.basic_lighting.fs
         const mat = new THREE.ShaderMaterial({
           vertexShader: `
-            varying vec3 vNormal;
-            varying vec3 vPos;
+            varying vec3 Normal;
+            varying vec3 camDir;
             
             void main() {
-              vPos = position;
-              vNormal = normalize(normal);
-              gl_Position = projectionMatrix * modelViewMatrix * vec4(vPos, 1.0);
+              Normal = normalize(normal);
+
+              vec3 sphereCenter = (modelMatrix * vec4(0.0, 0.0, 0.0, 1.0)).xyz;
+              camDir = normalize(cameraPosition - sphereCenter);
+
+              gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0);
             }
           `,
           fragmentShader: `
-            uniform vec3 color3;
-            uniform vec3 lightPos;
-            varying vec3 vNormal;
-            varying vec3 vPos;
+            varying vec3 Normal;  
+            varying vec3 camDir;
+              
+            uniform vec3 lightPos; 
+            uniform vec3 lightColor;
+            uniform vec3 objectColor;
             
-            void main() {
-              vec3 lightDir = normalize(lightPos - vPos);
-              float diff = max(dot(vNormal, lightDir), 0.0);
-              vec3 color = color3 * diff; // White color
-              gl_FragColor = vec4(color, 1.0);
-            }
+            void main()
+            {
+                // diffuse 
+                float diffuseStrength = 0.93;
+                vec3 norm = normalize(Normal);
+                vec3 lightDir = camDir;
+                float diff = max(dot(norm, lightDir), 0.0);
+                vec3 diffuse = diff * lightColor * diffuseStrength;
+
+                // specular
+                float specularStrength = 0.55;
+                vec3 viewDir = camDir;
+                vec3 reflectDir = reflect(-lightDir, norm);  
+                float spec = pow(max(dot(viewDir, reflectDir), 0.0), 32.0);
+                vec3 specular = specularStrength * spec * lightColor;  
+                    
+                vec3 result = ( specular + diffuse) * objectColor;
+                gl_FragColor  = vec4(result, 1.0);
+            } 
           `,
           uniforms: {
-            color3: {value: c},
-            lightPos: { value: camera.position }
+            lightColor: {value: new THREE.Color(0xffffff)},
+            objectColor: {value: c},
           }
         });
 
-        mat.color = c;
         const mesh = new THREE.Mesh(sphere, mat);
         mesh.position.set(x, z, y); // Alien coords!
         scene.add(mesh);
       })
+
+      
 
       const controls = new OrbitControls(camera, renderer.domElement);
 
