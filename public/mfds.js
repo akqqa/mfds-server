@@ -15,6 +15,7 @@ let manualCallSign = false;
 
 let dictOrd = [];
 let dict = {};
+let lastLoadedDict = "";
 
 let typewriters = [];
 
@@ -121,6 +122,7 @@ const updateDict = () => {
 
   // Update stored dict
   localStorage.setItem("dict", JSON.stringify(dictOrd));
+  localStorage.setItem("dict-raw", lastLoadedDict);
 
   // Update map version
   dict = Object.fromEntries(
@@ -151,6 +153,9 @@ const loadDictionary = (text) => {
     ));
     dictOrd = dictOrd.map(x => ({ ...x, desc: descs[x.key] }));
 
+    // Set the most recently loaded dict contents
+    lastLoadedDict = text;
+
     updateDict();
     return true;
   }
@@ -165,12 +170,14 @@ const loadDictionary = (text) => {
 
 const initialiseDict = () => {
   let dict = localStorage.getItem("dict");
+  let dictRaw = localStorage.getItem("dict-raw");
   if (!dict) {
     return;
   }
   else {
     console.log("Loading dictionary from storage")
     dictOrd = JSON.parse(dict);
+    lastLoadedDict = dictRaw;
     updateDict();
   }
 }
@@ -1104,6 +1111,8 @@ window.onload = () => {
 
   $("#clipboard-zone").addEventListener("click", () => {
     const clipboardDialog = $("dialog.clipboard-paste");
+    const clipboardTextArea = $("textarea.dict-paste-contents");
+    clipboardTextArea.value = lastLoadedDict;
     clipboardDialog.showModal();
   });
 
