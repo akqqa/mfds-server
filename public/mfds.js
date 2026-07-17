@@ -152,15 +152,16 @@ const loadDictionary = (text) => {
     dictOrd = dictOrd.map(x => ({ ...x, desc: descs[x.key] }));
 
     updateDict();
+    return true;
   }
 
   catch (e) {
     console.error("Could not read dictionary");
-
     renderErrorMessage("Could not read dictionary: " + e.message);
+    return false;
   }
-
 }
+
 
 const initialiseDict = () => {
   let dict = localStorage.getItem("dict");
@@ -451,11 +452,11 @@ const renderMessage = (sender, sequence, message) => {
       sceneDiv.style.width = "400px";
       sceneDiv.style.height = "300px";
       el.appendChild(sceneDiv);
-      
+
       $(".view").scrollTop = $(".view").scrollHeight;
 
       const scene = new THREE.Scene();
-      const camera = new THREE.PerspectiveCamera(50, 400/300, 0.1, 2000);
+      const camera = new THREE.PerspectiveCamera(50, 400 / 300, 0.1, 2000);
       camera.position.x = -18.5;
       const renderer = new THREE.WebGLRenderer();
       renderer.logarithmicDepthBuffer = true;
@@ -473,8 +474,8 @@ const renderMessage = (sender, sequence, message) => {
       scene.add(bottomGrid);
       scene.add(topGrid);
 
-      sphereData.forEach(([x,y,z,radius,color]) => {
-        const sphere = new THREE.SphereGeometry(radius/2);
+      sphereData.forEach(([x, y, z, radius, color]) => {
+        const sphere = new THREE.SphereGeometry(radius / 2);
         // map the color - using the key levels apples described to match the game and interpolatee between
         let c = calculateColor(color);
         // https://medium.com/@aurelienagtn/introduction-to-shaders-with-three-js-create-an-animated-sphere-d4920fbab126
@@ -522,8 +523,8 @@ const renderMessage = (sender, sequence, message) => {
             } 
           `,
           uniforms: {
-            lightColor: {value: new THREE.Color(0xffffff)},
-            objectColor: {value: c},
+            lightColor: { value: new THREE.Color(0xffffff) },
+            objectColor: { value: c },
           }
         });
 
@@ -532,7 +533,7 @@ const renderMessage = (sender, sequence, message) => {
         scene.add(mesh);
       })
 
-      
+
 
       const controls = new OrbitControls(camera, renderer.domElement);
 
@@ -814,26 +815,26 @@ const parseSphereData = (message) => {
 // 9 - #FFFFFF
 // Code thanks to @elnico56 in discord!!!!
 const COLORS = [
-    "FF5800", "BBFF00",
-    "00CDFF", "0084FF",
-    "4D00FF", "FB39FF",
-    "FF0FD7", "484848",
-    "636363", "FFFFFF"
+  "FF5800", "BBFF00",
+  "00CDFF", "0084FF",
+  "4D00FF", "FB39FF",
+  "FF0FD7", "484848",
+  "636363", "FFFFFF"
 ];
 
 const calculateColor = (value) => {
-    let n = value / 64 * (COLORS.length - 1);
-    let lo = Math.floor(n);
-    let hi = Math.ceil(n);
-    let c = getGradientColor(COLORS[lo], COLORS[hi], n % 1)
-    console.log("COLOUR " + c);
-    return new THREE.Color(Number(c));
+  let n = value / 64 * (COLORS.length - 1);
+  let lo = Math.floor(n);
+  let hi = Math.ceil(n);
+  let c = getGradientColor(COLORS[lo], COLORS[hi], n % 1)
+  console.log("COLOUR " + c);
+  return new THREE.Color(Number(c));
 }
 
 // Source - https://stackoverflow.com/a/27709336
 // Posted by rjurado01, modified by community. See post 'Timeline' for change history
 // Retrieved 2026-07-15, License - CC BY-SA 4.0
-const getGradientColor = function(start_color, end_color, percent) {
+const getGradientColor = function (start_color, end_color, percent) {
 
   // get colors
   let start_red = parseInt(start_color.substr(0, 2), 16),
@@ -1099,6 +1100,35 @@ window.onload = () => {
   initialiseTheme();
   $("#retheme").addEventListener("click", () => {
     changeTheme();
+  });
+
+  $("#clipboard-zone").addEventListener("click", () => {
+    const clipboardDialog = $("dialog.clipboard-paste");
+    clipboardDialog.showModal();
+  });
+
+  $("button.close-dialog").addEventListener("click", () => {
+    const clipboardDialog = $("dialog.clipboard-paste");
+    clipboardDialog.close();
+  });
+
+  $("button.save-dictionary").addEventListener("click", () => {
+    const content = $("textarea.dict-paste-contents").value;
+    if (!content) {
+      console.warn("Could not retrieve contents from textarea");
+      return;
+    }
+
+    const res = loadDictionary(content);
+
+    if (res) {
+      $("textarea.dict-paste-contents").value = "";
+    }
+
+
+    const clipboardDialog = $("dialog.clipboard-paste");
+    clipboardDialog.close();
+
   });
 
 }

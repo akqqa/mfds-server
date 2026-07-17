@@ -78,12 +78,25 @@ main {
     letter-spacing: 0.2ch;
   }
 
-  & #dictionary-click-zone {
+  & .click-zone {
+    display: flex;
+  }
+
+  & #clipboard-zone {
     display: flex;
     align-items: center;
     justify-content: center;
+    padding: 0.5ch;
+    border-left: 2px solid var(--theme-color-darker);
+    cursor: pointer;
+  }
 
-
+  & #dictionary-click-zone {
+    flex: 1;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
 
     padding-block: 1ch;
 
@@ -94,6 +107,10 @@ main {
     &[loaded=true] {
       padding-block: 0.5ch;
       color: var(--theme-color);
+
+      &+#clipboard-zone {
+        color: var(--theme-color);
+      }
     }
   }
 
@@ -200,9 +217,84 @@ main {
       color: black;
     }
   }
-
-
 }
+
+dialog {
+  background-color: black;
+  width: 100%;
+  max-width: min(50em, 100vw - 4em);
+  height: 100%;
+  max-height: min(30em, 100vh - 4em);
+  outline: none;
+  border: 2px solid var(--theme-color-darker);
+  padding: 0;
+
+  & .dialog-content {
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+  }
+
+  &::backdrop {
+    background-color: rgb(0 0 0 / 40%);
+  }
+
+  & p.dialog-title {
+    color: var(--theme-color);
+    border-bottom: 2px solid var(--theme-color-darker);
+    padding: 1ch;
+    padding-left: 1em;
+    text-transform: uppercase;
+
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+
+    & button {
+      border-radius: 0;
+      background-color: black;
+      color: var(--theme-color);
+      font-family: 'Hack', 'Courier New', Courier, monospace;
+      text-transform: uppercase;
+      padding: 0.25ch 0.75ch;
+      padding-bottom: 0.125ch;
+      font-size: 1.25em;
+    }
+
+  }
+
+
+  & div.button-row {
+    display: flex;
+    justify-content: end;
+    border-top: 2px solid var(--theme-color-darker);
+    padding: 0.5ch;
+
+    & button {
+      border-radius: 0;
+      background-color: black;
+      color: var(--theme-color);
+      font-family: 'Hack', 'Courier New', Courier, monospace;
+      text-transform: uppercase;
+      padding: 0.5ch;
+      padding-bottom: 0.25ch;
+    }
+  }
+}
+
+
+textarea.dict-paste-contents {
+  width: 100%;
+  flex-grow: 1;
+  resize: none;
+  background-color: transparent;
+  color: var(--theme-color-darker);
+  padding: 1em;
+  border: none;
+  outline: none;
+  font-family: 'Hack', 'Courier New', Courier, monospace;
+}
+
 
 .spacer {
   flex-grow: 1;
