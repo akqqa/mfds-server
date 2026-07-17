@@ -18,6 +18,7 @@ let dict = {};
 let lastLoadedDict = "";
 
 let typewriters = [];
+let retrying = false;
 
 
 //**************************************************//
@@ -560,10 +561,10 @@ const renderMessage = (sender, sequence, message) => {
 
 }
 
-const renderErrorMessage = (message) => {
+const renderErrorMessage = (message, classes = ["error"]) => {
 
   const el = document.createElement("div");
-  el.classList.add("message", "error");
+  el.classList.add("message", ...classes);
 
   const ael = document.createElement("i");
   ael.classList.add("fa", "fa-warning");
@@ -879,17 +880,36 @@ const getGradientColor = function (start_color, end_color, percent) {
 
 let socket;
 
-window.onload = () => {
+const runWebSocket = (isReconnect) => {
+
   console.log("Opening websocket connection...")
 
   socket = new WebSocket(`wss://dscr-relay.dixonary.co.uk`);
   socket.addEventListener("open", () => {
     console.log("connected");
-    socket.send(`S,${unconfirmedCallSign}`);
+    retrying = false;
+
+    if (isReconnect) {
+      socket.send(`S,${unconfirmedCallSign},0`);
+    }
+    else {
+      socket.send(`S,${unconfirmedCallSign}`);
+    }
 
     // Prevent message-received sounds for the first 5 seconds
     receive_sounds_after = Date.now() + 5;
   })
+
+  socket.onclose = function (e) {
+    console.log('Socket is closed. Reconnect will be attempted in 1 second.', e.reason);
+    if (!retrying) {
+      renderErrorMessage("Lost connection to Relay. Retrying...");
+    }
+    retrying = true;
+    setTimeout(function () {
+      runWebSocket(true);
+    }, 5000);
+  };
 
   socket.addEventListener("message", (ev) => {
     let content = ev.data.split(",");
@@ -957,9 +977,18 @@ window.onload = () => {
         }
 
         break;
+      case 'E':
+        // Reconnection OK
+        renderErrorMessage(`Reconnected to Relay`, ["good"]);
+
     }
   });
 
+}
+
+window.onload = () => {
+
+  runWebSocket();
   $$(".digit-up").forEach(elem => {
     elem.addEventListener("click", () => {
       const val = getDigitValue(elem.parentNode);

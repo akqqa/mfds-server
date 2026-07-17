@@ -43,7 +43,7 @@ data Message = Message
   }
 
 data RecvMessage
-  = SetCallSign CallSign
+  = SetCallSign CallSign Bool
   | Say [Int]
   | Noop
   deriving (Show)
@@ -52,6 +52,7 @@ data SendMessage
   = Msg Message
   | CallSignOK CallSign
   | CallSignInUse CallSign
+  | ReconnectOK
   | AllClients [CallSign]
 
 renderCallSign :: CallSign -> Text
@@ -74,24 +75,31 @@ runChat state pending = do
     do
       myCallSign <- newMVar $ CallSign $ -1
       let
+        getCallSign :: IO Bool
         getCallSign = flip (withMessage conn) myCallSign \case
-          SetCallSign cs -> do
+          SetCallSign cs True -> do
+            writeCallSign cs conn >> pure True
+          SetCallSign cs False -> do
             didSetCallSign <- setCallSign cs myCallSign conn
             if didSetCallSign
-              then writeMVar myCallSign cs >> pure ()
+              then writeMVar myCallSign cs >> pure False
               else getCallSign
           _ -> getCallSign
 
-      -- Loop until a fresh callsign is received
-      getCallSign
+      -- Loop until a fresh callsign is received, or until the
+      -- user has told us they were making a reconnect attempt
+      isReconnect <- getCallSign
 
-      -- Send the last 10 messages
-      sendHistory conn
+      -- Send the last 10 messages, or a notice that the
+      -- reconnection was successful
+      if isReconnect
+        then send ReconnectOK conn
+        else sendHistory conn
 
       flip finally (disconnect myCallSign) $
         forever $
           flip (withMessage conn) myCallSign \case
-            SetCallSign cs -> do
+            SetCallSign cs k -> do
               didSetCallSign <- setCallSign cs myCallSign conn
               when didSetCallSign $ writeMVar myCallSign cs
             Say content -> do
@@ -99,7 +107,7 @@ runChat state pending = do
               handleMessage content cs
             Noop -> pure ()
  where
-  withMessage :: WS.Connection -> (RecvMessage -> IO ()) -> MVar CallSign -> IO ()
+  withMessage :: WS.Connection -> (RecvMessage -> IO a) -> MVar CallSign -> IO a
   withMessage conn a mcs = do
     m <- fmap parseMsg (WS.receiveData conn)
     case m of
@@ -114,6 +122,16 @@ runChat state pending = do
       Right m' -> do
         putStrLn $ show m'
         a m'
+
+  -- Forcibly write the call sign without regard for what was there before.
+  -- This should only be received during a reconnection attempt.
+  -- It is likely to cause issues if someone tries to reconnect who was not previously/recently connected.
+  writeCallSign :: CallSign -> WS.Connection -> IO ()
+  writeCallSign callSign conn = modifyMVar_ state $ \s ->
+    pure
+      s
+        { clients = Map.insert callSign conn $ clients s
+        }
 
   setCallSign :: CallSign -> MVar CallSign -> WS.Connection -> IO Bool
   setCallSign callSign mcs conn = do
@@ -149,9 +167,12 @@ runChat state pending = do
   parseMsg :: Text -> Either String RecvMessage
   parseMsg msg = first errorBundlePretty $ parse p "" msg
    where
-    p, pcs, pmsg :: Parsec Void Text RecvMessage
-    p = pcs <|> pmsg
-    pcs = fmap (SetCallSign . CallSign) $ "S," *> decimal
+    p, rcs, pcs, pmsg :: Parsec Void Text RecvMessage
+    p = pcs <|> rcs <|> pmsg
+    -- Reconnect message S,1234,0
+    rcs = fmap (\x -> SetCallSign (CallSign x) True) $ "S," *> decimal <* ",0"
+    -- Standard join message S,1234
+    pcs = fmap (\x -> SetCallSign (CallSign x) False) $ "S," *> decimal
     pmsg = fmap Say $ "M," *> (signed space decimal `sepBy` ",")
 
   renderMsg :: SendMessage -> Text
@@ -161,6 +182,7 @@ runChat state pending = do
         ["R", renderCallSign author, Text.pack $ show messageNumber]
           <> (map (Text.pack . show) content)
     CallSignOK n -> "K," <> renderCallSign n
+    ReconnectOK -> "E"
     CallSignInUse n -> "U," <> renderCallSign n
     AllClients clients -> "C," <> mconcat (List.intersperse "," $ map renderCallSign clients)
 

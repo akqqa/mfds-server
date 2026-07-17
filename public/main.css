@@ -393,6 +393,15 @@ textarea.dict-paste-contents {
       }
     }
 
+    &.good {
+      background-color: rgba(0, 255, 0, 0.1);
+      color: rgba(0, 180, 0, 1);
+
+      & i {
+        margin-right: 2ch;
+      }
+    }
+
     & .sender {
       font-weight: bold;
       margin-right: 2ch;
