@@ -99,7 +99,7 @@ runChat state pending = do
       flip finally (disconnect myCallSign) $
         forever $
           flip (withMessage conn) myCallSign \case
-            SetCallSign cs k -> do
+            SetCallSign cs _ -> do
               didSetCallSign <- setCallSign cs myCallSign conn
               when didSetCallSign $ writeMVar myCallSign cs
             Say content -> do
@@ -168,7 +168,7 @@ runChat state pending = do
   parseMsg msg = first errorBundlePretty $ parse p "" msg
    where
     p, rcs, pcs, pmsg :: Parsec Void Text RecvMessage
-    p = pcs <|> rcs <|> pmsg
+    p = (pcs <|> rcs <|> pmsg) <* eof
     -- Reconnect message S,1234,0
     rcs = fmap (\x -> SetCallSign (CallSign x) True) $ "S," *> decimal <* ",0"
     -- Standard join message S,1234
