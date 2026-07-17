@@ -20,6 +20,10 @@ let lastLoadedDict = "";
 let typewriters = [];
 let retrying = false;
 
+// Will be used for the socket send function
+let send = (msg) => {
+  console.warn("Could not send message (socket is not open)");
+}
 
 //**************************************************//
 // SOUNDS
@@ -885,15 +889,26 @@ const runWebSocket = (isReconnect) => {
   console.log("Opening websocket connection...")
 
   socket = new WebSocket(`wss://dscr-relay.dixonary.co.uk`);
+
+  send = (msg) => {
+    if (socket?.readyState === WebSocket.OPEN) {
+      console.log(`SENDING: ${msg}`);
+      socket.send(msg);
+    }
+    else {
+      console.warn("Could not send message (socket is not open)");
+    }
+  }
+
   socket.addEventListener("open", () => {
     console.log("connected");
     retrying = false;
 
     if (isReconnect) {
-      socket.send(`S,${unconfirmedCallSign},0`);
+      send(`S,${unconfirmedCallSign},0`);
     }
     else {
-      socket.send(`S,${unconfirmedCallSign}`);
+      send(`S,${unconfirmedCallSign}`);
     }
 
     // Prevent message-received sounds for the first 5 seconds
@@ -901,7 +916,7 @@ const runWebSocket = (isReconnect) => {
   })
 
   socket.onclose = function (e) {
-    console.log('Socket is closed. Reconnect will be attempted in 1 second.', e.reason);
+    console.log('Socket is closed. Reconnect will be attempted in 5 seconds.', e.reason);
     if (!retrying) {
       renderErrorMessage("Lost connection to Relay. Retrying...");
     }
@@ -956,7 +971,7 @@ const runWebSocket = (isReconnect) => {
         else {
           renderErrorMessage(`Call sign ${renderCallSign(unconfirmedCallSign)} in use; randomizing...`);
           randomizeCallSign();
-          socket.send(`S,${unconfirmedCallSign}`);
+          send(`S,${unconfirmedCallSign}`);
         }
         break;
       case 'C':
@@ -1013,7 +1028,7 @@ window.onload = () => {
 
   $("#set-call-sign").addEventListener("click", () => {
     manualCallSign = true;
-    socket.send(`S,${unconfirmedCallSign}`);
+    send(`S,${unconfirmedCallSign}`);
   })
 
 
@@ -1101,7 +1116,7 @@ window.onload = () => {
       if (result) {
         const msg = `M,${result.join(",")}`
         console.log("Sending: " + msg);
-        socket.send(msg);
+        send(msg);
         // Clear message
         $("#message-input").value = "";
         // Play sound

@@ -74,42 +74,43 @@ runChat state pending = do
   WS.withPingThread conn 30 mempty $
     do
       myCallSign <- newMVar $ CallSign $ -1
-      let
-        getCallSign :: IO Bool
-        getCallSign = flip (withMessage conn) myCallSign \case
-          SetCallSign cs True -> do
-            writeCallSign cs conn >> pure True
-          SetCallSign cs False -> do
-            didSetCallSign <- setCallSign cs myCallSign conn
-            if didSetCallSign
-              then writeMVar myCallSign cs >> pure False
-              else getCallSign
-          _ -> getCallSign
-
-      -- Loop until a fresh callsign is received, or until the
-      -- user has told us they were making a reconnect attempt
-      isReconnect <- getCallSign
-
-      -- Send the last 10 messages, or a notice that the
-      -- reconnection was successful
-      if isReconnect
-        then send ReconnectOK conn
-        else sendHistory conn
-
-      flip finally (disconnect myCallSign) $
-        forever $
-          flip (withMessage conn) myCallSign \case
-            SetCallSign cs _ -> do
+      flip finally (disconnect myCallSign) $ do
+        let
+          getCallSign :: IO Bool
+          getCallSign = flip (withMessage conn) myCallSign \case
+            SetCallSign cs True -> do
+              writeCallSign cs conn >> pure True
+            SetCallSign cs False -> do
               didSetCallSign <- setCallSign cs myCallSign conn
-              when didSetCallSign $ writeMVar myCallSign cs
-            Say content -> do
-              cs <- readMVar myCallSign
-              handleMessage content cs
-            Noop -> pure ()
+              if didSetCallSign
+                then writeMVar myCallSign cs >> pure False
+                else getCallSign
+            _ -> getCallSign
+
+        -- Loop until a fresh callsign is received, or until the
+        -- user has told us they were making a reconnect attempt
+        isReconnect <- getCallSign
+
+        -- Send the last 10 messages, or a notice that the
+        -- reconnection was successful
+        if isReconnect
+          then send ReconnectOK conn
+          else sendHistory conn
+
+        forever $ flip (withMessage conn) myCallSign \case
+          -- Reconnects get no special treatment
+          SetCallSign cs _ -> do
+            didSetCallSign <- setCallSign cs myCallSign conn
+            when didSetCallSign $ writeMVar myCallSign cs
+          Say content -> do
+            cs <- readMVar myCallSign
+            handleMessage content cs
+          Noop -> pure ()
  where
   withMessage :: WS.Connection -> (RecvMessage -> IO a) -> MVar CallSign -> IO a
   withMessage conn a mcs = do
     m <- fmap parseMsg (WS.receiveData conn)
+    print m
     case m of
       Left err -> do
         putStrLn "======"
@@ -161,6 +162,7 @@ runChat state pending = do
   disconnect :: MVar CallSign -> IO ()
   disconnect mcs = do
     cs <- readMVar mcs
+    putStrLn $ "Disconnecting client " ++ Text.unpack (renderCallSign cs)
     remClient cs
     broadcastClients
 
