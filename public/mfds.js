@@ -819,7 +819,7 @@ const calculateColor = (value) => {
   const spacing = 64/9;
 
   if (value <= spacing) { // Linearly blend between the first two
-    percentage = (value/9);
+    percentage = (value/spacing);
     c = getGradientColor("FF5800", "BBFF00", percentage);
   } else if (value <= spacing*2) {
     percentage = ((value-spacing)/spacing);
