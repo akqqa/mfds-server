@@ -5,11 +5,16 @@ import { EffectComposer } from 'three/addons/postprocessing/EffectComposer.js';
 
 // Global constants
 
+let relayEndpoint = `wss://dscr-relay.dixonary.co.uk`;
+
+// When running locally, use the local server
+if (window.location.hostname === "localhost") {
+  relayEndpoint = `ws://localhost:3101`;
+}
+
 const SIGNAL_ENC = -65535;
 const SIGNAL_ENC_ENABLE = -65534;
 const SIGNAL_ENC_DISABLE = -65533;
-
-const relayEndpoint = `wss://dscr-relay.dixonary.co.uk`;
 
 // Global variables
 
@@ -179,7 +184,7 @@ const updateDict = () => {
   $("#dictionary-click-zone").setAttribute("loaded", "true");
 
   // Reset all translations
-  $$(".do-translate").map(el => el.removeAttribute("data-status"));
+  $$(".do-translate").forEach(el => el.removeAttribute("data-status"));
 }
 
 const loadDictionary = (text) => {
@@ -252,7 +257,6 @@ const updateEncryptionKeys = () => {
   encryptionKeys.forEach(k => {
     elAll.innerHTML += `<p class="encryption-key">[${k}]</p>`;
   });
-
 
   const arr = Array.from(encryptionKeys)
   localStorage.setItem("encryption-keys", JSON.stringify(arr));
