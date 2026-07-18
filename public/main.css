@@ -133,6 +133,9 @@ main {
     display: flex;
     flex-direction: column;
 
+
+    border-bottom: 0.25em solid black;
+
   }
 
   & .dict-view-content {
@@ -156,9 +159,27 @@ main {
     }
   }
 
-  & .num-call-signs {
+  & .encryption-keys {
+
+    &[data-n="0"] {
+      display: none;
+    }
+
+    & #all-encryption-keys {
+      display: flex;
+      flex-direction: column;
+      padding: 0.5ch;
+      gap: 0.5ch;
+
+      & p {
+        text-align: right;
+      }
+    }
+
+  }
+
+  & .sidebar-title {
     text-align: center;
-    border-top: 0.25em solid black;
     background-color: var(--theme-color-darker);
     padding: 0.25em;
     font-weight: bold;
@@ -359,6 +380,8 @@ textarea.dict-paste-contents {
 
       text-shadow: 0 0 0.5ch currentColor;
       flex-grow: 1;
+
+
     }
 
     & .message-aux {
@@ -393,6 +416,7 @@ textarea.dict-paste-contents {
       }
     }
 
+
     &.error {
       background-color: rgba(255, 0, 0, 0.1);
       color: rgba(255, 200, 200, 1);
@@ -414,6 +438,11 @@ textarea.dict-paste-contents {
     & .sender {
       font-weight: bold;
       margin-right: 2ch;
+    }
+
+    & .encryption-key {
+      color: #ffff00;
+      margin-right: 1ch;
     }
 
     & span {

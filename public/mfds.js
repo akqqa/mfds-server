@@ -3,6 +3,8 @@ import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
 import { RenderPixelatedPass } from 'three/addons/postprocessing/RenderPixelatedPass.js';
 import { EffectComposer } from 'three/addons/postprocessing/EffectComposer.js';
 
+let relayEndpoint = `wss://dscr-relay.dixonary.co.uk`;
+
 // Global variables
 
 let $ = (x) => document.querySelector(x);
@@ -132,12 +134,13 @@ const updateSidebar = () => {
     main.classList.add("hide-sidebar");
   }
 
-  localStorage.setItem("hide-sidebar", sidebar_visible);
+  localStorage.setItem("sidebar-visible", sidebar_visible);
 }
 
 const initialiseSidebar = () => {
-  const os = localStorage.getItem("hide-sidebar");
-  sidebar_visible = !os;
+  const os = JSON.parse(localStorage.getItem("sidebar-visible"));
+  sidebar_visible = !!os;
+  console.log(`Sidebar initialised to ${sidebar_visible ? "visible" : "hidden"}`);
   updateSidebar();
 }
 
@@ -213,6 +216,63 @@ const initialiseDict = () => {
     dictOrd = JSON.parse(dict);
     lastLoadedDict = dictRaw;
     updateDict();
+  }
+}
+
+//**************************************************//
+// ENCRYPTED SIGNALS
+
+/* 
+  An encrypted signal is one that starts with |-9999, then an integer k (the 
+  encryption key), then the main message body.
+  Only users with encryption key k enabled will see messages using encryption
+  key k.
+
+  Users with encryption key 0 enabled will see all messages.
+
+  |-9999 is WITH_ENCRYPTION_KEY
+  |-9998 is ENABLE_ENCRYPTION_KEY
+  |-9997 is DISABLE_ENCRYPTION_KEY
+*/
+
+let encryptionKeys = new Set([1]);
+
+const updateEncryptionKeys = () => {
+  const n = encryptionKeys.size;
+  const elKeys = $(".encryption-keys");
+  const elNum = $(".encryption-keys .num-encryption-keys");
+  const elAll = $("#all-encryption-keys");
+  elNum.innerText = `${n} KEY${n == 1 ? "" : "S"} IN USE`;
+  elKeys.setAttribute("data-n", n);
+
+  elAll.innerHTML = "";
+  encryptionKeys.forEach(k => {
+    elAll.innerHTML += `<p class="encryption-key">[${k}]</p>`;
+  });
+
+
+  const arr = Array.from(encryptionKeys)
+  localStorage.setItem("encryption-keys", JSON.stringify(arr));
+}
+
+const enableEncryptionKey = (k) => {
+  encryptionKeys.add(k);
+  renderErrorMessage("Added encryption key " + k, ["good"])
+  updateEncryptionKeys();
+}
+
+const disableEncryptionKey = (k) => {
+  encryptionKeys.delete(k);
+  renderErrorMessage("Removed encrpytion key " + k, ["good"])
+  updateEncryptionKeys();
+}
+
+const initialiseEncryptionKeys = () => {
+  let ks = JSON.parse(localStorage.getItem("encryption-keys"));
+  if (ks) {
+    console.log("Encryption keys loaded from storage")
+    encryptionKeys = new Set(ks);
+    updateEncryptionKeys();
   }
 }
 
@@ -422,7 +482,7 @@ const toggleExpandMessage = (el) => {
 
 }
 
-const renderMessage = (sender, sequence, message) => {
+const renderMessage = (sender, sequence, message, encryptionKey) => {
 
   const stringMessage = JSON.stringify(message);
 
@@ -449,13 +509,23 @@ const renderMessage = (sender, sequence, message) => {
 
   const vel = document.createElement("div");
 
-  mel.appendChild(ael);
+  mel.appendChild(ael)
+
+  // Add info about encrypted message  
+  if (encryptionKey !== undefined) {
+    const kel = document.createElement("span");
+    kel.classList.add("encryption-key");
+    kel.innerHTML = `<i class="fa fa-key"></i>${encryptionKey}`;
+    mel.appendChild(kel);
+  }
+
   mel.appendChild(bel);
   el.appendChild(mel);
 
   el.appendChild(vel);
 
   sel.appendChild(seqel);
+
   if (message.length > 50) {
     const smel = document.createElement("button");
     smel.classList.add("seeMoreButton");
@@ -917,7 +987,7 @@ const runWebSocket = (isReconnect) => {
 
   console.log("Opening websocket connection...")
 
-  socket = new WebSocket(`wss://dscr-relay.dixonary.co.uk`);
+  socket = new WebSocket(relayEndpoint);
 
   send = (msg) => {
     if (socket?.readyState === WebSocket.OPEN) {
@@ -1012,12 +1082,27 @@ const runWebSocket = (isReconnect) => {
         // Received message
         const sender = parseInt(content[1]);
         const sequence = parseInt(content[2]);
-        const message = content.slice(3).map(x => parseInt(x, 10));
+        let message = content.slice(3).map(x => parseInt(x, 10));
 
-        renderMessage(sender, sequence, message);
+        if (message[0] === -9999) {
+          // Encrypted message
 
-        if (sender !== callSign && Date.now() > receive_sounds_after) {
-          play(snd_recv);
+          // Encryption key
+          const k = message[1];
+          message = message.slice(2);
+
+          if (encryptionKeys.has(k) || encryptionKeys.has(0)) {
+            renderMessage(sender, sequence, message, k);
+
+          }
+        }
+        else {
+          renderMessage(sender, sequence, message);
+
+          if (sender !== callSign && Date.now() > receive_sounds_after) {
+            play(snd_recv);
+          }
+
         }
 
         break;
@@ -1033,6 +1118,7 @@ const runWebSocket = (isReconnect) => {
 window.onload = () => {
 
   runWebSocket();
+
   $$(".digit-up").forEach(elem => {
     elem.addEventListener("click", () => {
       const val = getDigitValue(elem.parentNode);
@@ -1142,7 +1228,47 @@ window.onload = () => {
     if (text.length > 0) {
       let result = parseText(text);
       console.log(result);
+
       if (result) {
+
+        if (result[0] === -9998) {
+          if (result.length === 2) {
+            enableEncryptionKey(result[1]);
+            $("#message-input").value = "";
+            play(snd_send);
+          }
+          else {
+            renderErrorMessage("Exactly two signals required for this message");
+          }
+          // Do not send the message
+          return;
+        }
+
+        else if (result[0] === -9997) {
+          if (result.length === 2) {
+            disableEncryptionKey(result[1]);
+            $("#message-input").value = "";
+            play(snd_send);
+          }
+          else {
+            renderErrorMessage("Exactly two signals required for this message");
+          }
+          // Do not send the message
+          return;
+        }
+
+        else if (result[0] === -9999) {
+          // Requires at least 3 signals
+          if (result.length < 3) {
+            renderErrorMessage("Encrypted message requires at least 3 signals");
+            return;
+          }
+          if (!(encryptionKeys.has(result[1]) || encryptionKeys.has(0))) {
+            renderErrorMessage(`Encryption key ${result[1]} is not enabled`);
+            return;
+          }
+        }
+
         const msg = `M,${result.join(",")}`
         console.log("Sending: " + msg);
         send(msg);
@@ -1187,6 +1313,9 @@ window.onload = () => {
   $("#toggle-sidebar").addEventListener("click", () => {
     toggleSidebar();
   })
+
+  // Setup encryption keys
+  initialiseEncryptionKeys();
 
   // Setup clipboard
 
