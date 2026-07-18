@@ -38,6 +38,17 @@ main {
   grid-template-rows: auto 1fr 3em 3em;
   background-color: black;
 
+  &.hide-sidebar {
+    grid-template-columns: 0 1fr;
+
+    & .sidebar,
+    & .entry,
+    & .footer {
+      display: none;
+    }
+
+  }
+
   &.read-only {
     grid-template-columns: 0 1fr;
     grid-template-rows: auto 1fr 0 0;

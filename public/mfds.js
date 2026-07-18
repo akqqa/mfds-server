@@ -113,6 +113,35 @@ const initialiseTheme = () => {
 }
 
 //**************************************************//
+// SIDEBAR
+
+let sidebar_visible = false;
+
+const toggleSidebar = () => {
+  sidebar_visible = !sidebar_visible;
+  updateSidebar();
+}
+
+const updateSidebar = () => {
+  const main = $("main");
+
+  if (sidebar_visible) {
+    main.classList.remove("hide-sidebar");
+  }
+  else {
+    main.classList.add("hide-sidebar");
+  }
+
+  localStorage.setItem("hide-sidebar", sidebar_visible);
+}
+
+const initialiseSidebar = () => {
+  const os = localStorage.getItem("hide-sidebar");
+  sidebar_visible = !os;
+  updateSidebar();
+}
+
+//**************************************************//
 // DICTIONARY
 
 const updateDict = () => {
@@ -1152,6 +1181,14 @@ window.onload = () => {
   $("#retheme").addEventListener("click", () => {
     changeTheme();
   });
+
+  // Setup sidebar show/hide
+  initialiseSidebar();
+  $("#toggle-sidebar").addEventListener("click", () => {
+    toggleSidebar();
+  })
+
+  // Setup clipboard
 
   $("#clipboard-zone").addEventListener("click", () => {
     const clipboardDialog = $("dialog.clipboard-paste");
