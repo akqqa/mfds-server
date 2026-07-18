@@ -256,7 +256,9 @@ const updateEncryptionKeys = () => {
 
   elAll.innerHTML = "";
   encryptionKeys.forEach(k => {
-    elAll.innerHTML += `<p class="encryption-key">[${k}]</p>`;
+    let name = dict[k]?.value ?? "";
+    if (name) name += " ";
+    elAll.innerHTML += `<p class="encryption-key">${name}[${k}]</p>`;
   });
 
   const arr = Array.from(encryptionKeys)
@@ -523,7 +525,10 @@ const renderMessage = (sender, sequence, message, encryptionKey) => {
   if (encryptionKey !== undefined) {
     const kel = document.createElement("span");
     kel.classList.add("encryption-key");
-    kel.innerHTML = `<i class="fa fa-key"></i>${encryptionKey}`;
+
+    let keyName = (dict[encryptionKey]?.value) ?? ("" + encryptionKey);
+
+    kel.innerHTML = `<i class="fa fa-key"></i>${keyName}`;
     mel.appendChild(kel);
   }
 
