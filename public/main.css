@@ -41,9 +41,7 @@ main {
   &.hide-sidebar {
     grid-template-columns: 0 1fr;
 
-    & .sidebar,
-    & .entry,
-    & .footer {
+    & .sidebar {
       display: none;
     }
 
