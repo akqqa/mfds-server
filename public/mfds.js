@@ -3,7 +3,13 @@ import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
 import { RenderPixelatedPass } from 'three/addons/postprocessing/RenderPixelatedPass.js';
 import { EffectComposer } from 'three/addons/postprocessing/EffectComposer.js';
 
-let relayEndpoint = `wss://dscr-relay.dixonary.co.uk`;
+// Global constants
+
+const SIGNAL_ENC = -65535;
+const SIGNAL_ENC_ENABLE = -65534;
+const SIGNAL_ENC_DISABLE = -65533;
+
+const relayEndpoint = `wss://dscr-relay.dixonary.co.uk`;
 
 // Global variables
 
@@ -223,19 +229,16 @@ const initialiseDict = () => {
 // ENCRYPTED SIGNALS
 
 /* 
-  An encrypted signal is one that starts with |-9999, then an integer k (the 
+  An encrypted signal is one that starts with SIGNAL_ENC, then an integer k (the 
   encryption key), then the main message body.
   Only users with encryption key k enabled will see messages using encryption
   key k.
 
   Users with encryption key 0 enabled will see all messages.
 
-  |-9999 is WITH_ENCRYPTION_KEY
-  |-9998 is ENABLE_ENCRYPTION_KEY
-  |-9997 is DISABLE_ENCRYPTION_KEY
 */
 
-let encryptionKeys = new Set([1]);
+let encryptionKeys = new Set([]);
 
 const updateEncryptionKeys = () => {
   const n = encryptionKeys.size;
@@ -1084,7 +1087,7 @@ const runWebSocket = (isReconnect) => {
         const sequence = parseInt(content[2]);
         let message = content.slice(3).map(x => parseInt(x, 10));
 
-        if (message[0] === -9999) {
+        if (message[0] === SIGNAL_ENC) {
           // Encrypted message
 
           // Encryption key
@@ -1231,7 +1234,7 @@ window.onload = () => {
 
       if (result) {
 
-        if (result[0] === -9998) {
+        if (result[0] === SIGNAL_ENC_ENABLE) {
           if (result.length === 2) {
             enableEncryptionKey(result[1]);
             $("#message-input").value = "";
@@ -1244,7 +1247,7 @@ window.onload = () => {
           return;
         }
 
-        else if (result[0] === -9997) {
+        else if (result[0] === SIGNAL_ENC_DISABLE) {
           if (result.length === 2) {
             disableEncryptionKey(result[1]);
             $("#message-input").value = "";
@@ -1257,7 +1260,7 @@ window.onload = () => {
           return;
         }
 
-        else if (result[0] === -9999) {
+        else if (result[0] === SIGNAL_ENC) {
           // Requires at least 3 signals
           if (result.length < 3) {
             renderErrorMessage("Encrypted message requires at least 3 signals");
