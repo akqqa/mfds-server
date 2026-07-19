@@ -183,6 +183,21 @@ main {
     background-color: var(--theme-color-darker);
     padding: 0.25em;
     font-weight: bold;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    user-select: none;
+
+    & svg {
+      width: 1em;
+      height: 1em;
+      display: none;
+
+      .show-sender-icons & {
+        display: inline;
+        margin-right: 1ch;
+      }
+    }
   }
 
   & #call-sign {
@@ -432,6 +447,24 @@ textarea.dict-paste-contents {
 
       & i {
         margin-right: 2ch;
+      }
+    }
+
+    & .sender-icon {
+
+      display: none;
+
+      .show-sender-icons & {
+        display: block;
+        width: 2em;
+        height: 2em;
+        margin-right: 1ch;
+
+        & svg {
+          width: 100% !important;
+          height: 100% !important;
+        }
+
       }
     }
 
