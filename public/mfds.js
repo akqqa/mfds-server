@@ -8,9 +8,9 @@ import { EffectComposer } from 'three/addons/postprocessing/EffectComposer.js';
 let relayEndpoint = `wss://dscr-relay.dixonary.co.uk`;
 
 // When running locally, use the local server
-// if (window.location.hostname === "localhost") {
-//   relayEndpoint = `ws://localhost:3101`;
-// }
+if (window.location.hostname === "localhost") {
+  relayEndpoint = `ws://localhost:3101`;
+}
 
 // Scroll down only if at most 100px above the bottom
 const scrollDownThreshold = 100;
