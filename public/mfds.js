@@ -544,7 +544,7 @@ const renderMessage = (sender, sequence, message, encryptionKey) => {
   iconEl.classList.add("sender-icon");
   // iconEl.innerHTML = `<svg data-jdenticon-value="${sender}"></svg>`;
   console.log(getColorRGB(sender));
-  iconEl.innerHTML = jdenticon.toSvg(sender, 200, { backColor: getColorRGB(sender ^ 3) + "aa", lightness: { color: [0, 1.0], grayscale: [0, 1.0] } });
+  iconEl.innerHTML = jdenticon.toSvg(sender, 200, { backColor: getColorRGB((sender + 1001) ^ 3) + "aa", lightness: { color: [0, 1.0], grayscale: [0, 1.0] } });
   el.appendChild(iconEl);
 
   const mel = document.createElement("div");
