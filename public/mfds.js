@@ -339,7 +339,7 @@ const getColor = (value) => {
   const hue = (137.5 * value) % 360;
   return `hsl(${hue}deg 100% 70%)`;
 }
-const getColorRGB = (value) => {
+const getBgColor = (value) => {
   const hue = (137.5 * value) % 360;
   return hslToHex(hue, 100, 70);
 }
@@ -377,7 +377,7 @@ const randomizeCallSign = () => {
 const setActiveCallSigns = (n) => {
   activeCallSigns = n;
   const numCallSigns = $(".num-call-signs");
-  numCallSigns.innerHTML = jdenticon.toSvg("num call signs", 200, { backColor: getColorRGB(12345), lightness: { color: [0, 1.0], grayscale: [0, 1.0] } });
+  numCallSigns.innerHTML = jdenticon.toSvg("num call signs", 200, { backColor: getBgColor(12345), lightness: { color: [0, 1.0], grayscale: [0, 1.0] } });
   $(".num-call-signs").innerHTML += `${n} CALL SIGN${n == 1 ? '' : 'S'} ACTIVE`;
 }
 
@@ -542,9 +542,8 @@ const renderMessage = (sender, sequence, message, encryptionKey) => {
 
   const iconEl = document.createElement("div");
   iconEl.classList.add("sender-icon");
-  // iconEl.innerHTML = `<svg data-jdenticon-value="${sender}"></svg>`;
-  console.log(getColorRGB(sender));
-  iconEl.innerHTML = jdenticon.toSvg(sender, 200, { backColor: getColorRGB((sender % 1001) ^ 3) + "aa", lightness: { color: [0, 1.0], grayscale: [0, 1.0] } });
+
+  iconEl.innerHTML = jdenticon.toSvg(sender, 200, { backColor: getBgColor(simpleHash("aa" + sender)), lightness: { color: [0, 1.0], grayscale: [0, 1.0] } });
   el.appendChild(iconEl);
 
   const mel = document.createElement("div");
@@ -1462,4 +1461,13 @@ function hslToHex(h, s, l) {
     return hex.length === 1 ? '0' + hex : hex;
   };
   return `#${toHex(r)}${toHex(g)}${toHex(b)}`;
+}
+
+function simpleHash(str) {
+  let hash = 0;
+  for (let i = 0; i < str.length; i++) {
+    hash = (hash << 5) - hash + str.charCodeAt(i); // Shift and combine
+    hash |= 0; // Convert to 32-bit integer
+  }
+  return hash >>> 0; // Ensure the result is unsigned
 }
