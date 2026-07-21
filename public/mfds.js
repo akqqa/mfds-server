@@ -814,6 +814,7 @@ const renderMessage = (sender, sequence, message, encryptionKey) => {
   seqel.innerText = ("" + sequence).padStart(3, "0");
 
   const vel = document.createElement("div");
+  vel.classList.add("message-visual");
 
   mel.appendChild(ael)
 
@@ -858,7 +859,6 @@ const renderMessage = (sender, sequence, message, encryptionKey) => {
 
     // Listener for clicking image button
     cel.addEventListener("click", () => {
-      console.log("clicked")
       // Remove scene if exists
       if (sceneDiv) {
         sceneDiv.remove();
@@ -869,8 +869,8 @@ const renderMessage = (sender, sequence, message, encryptionKey) => {
       // Else create the scene
       sceneDiv = document.createElement("div");
       sceneDiv.classList.add("imageScene");
-      sceneDiv.style.width = "400px";
-      sceneDiv.style.height = "300px";
+      // sceneDiv.style.width = "400px";
+      // sceneDiv.style.height = "300px";
       vel.appendChild(sceneDiv);
 
       scrollToBottom();

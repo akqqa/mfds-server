@@ -421,6 +421,14 @@ textarea.dict-paste-contents {
 
     }
 
+    & .message-visual {
+      &:has(canvas) {
+        margin-left: 1ch;
+        border: 2px solid var(--theme-color-darker);
+      }
+    }
+
+
     & .message-aux {
       display: flex;
       flex-direction: column;
