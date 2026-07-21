@@ -616,12 +616,12 @@ const getTranslation = (str, inline = false) => {
 
             p = formatSpace(formatMode);
 
-            if (str[i - 1] === x && entry?.desc?.breakOnDouble && lastGap < 2) {
-              lastGap = 2;
-            }
-            else {
-              lastGap = entry?.desc?.formatModeAfter ?? 0;
-            }
+          }
+
+          lastGap = entry?.desc?.formatModeAfter ?? 0;
+          // Break on double
+          if (i > 0 && str[i - 1] === x && entry?.desc?.breakOnDouble && lastGap < 2) {
+            lastGap = 2;
           }
 
           const s = `<span class="signal" title="SIGNAL ${x}">${entry.value}</span>`;
