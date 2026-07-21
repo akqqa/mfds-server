@@ -571,6 +571,7 @@ const getTranslation = (str) => {
             const prev = dict[str[i - 1]];
 
             let formatMode = Math.max(lastGap, entry?.desc?.formatMode);
+            if (i == 0) formatMode = 0;
 
             p = formatSpace(formatMode);
 
@@ -588,8 +589,12 @@ const getTranslation = (str) => {
         else {
           // UNDEF is always rendered with a space (for now)
           let formatMode = Math.max(lastGap, 1);
+          if (i == 0) formatMode = 0;
+
           let p = formatSpace(formatMode);
+
           lastGap = 1;
+
           return `${p}<span class="signal undef">@${x}_UNDEF</span>`;
         }
       }
