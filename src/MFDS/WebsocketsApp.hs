@@ -19,7 +19,7 @@ import Data.Map qualified as Map
 import Data.Void
 import Network.WebSockets qualified as WS
 import System.Environment
-import Text.Megaparsec.Char (space)
+import Text.Megaparsec.Char (newline, space)
 import Text.Megaparsec.Char.Lexer (decimal, signed)
 
 data ServerState = ServerState
@@ -171,7 +171,7 @@ runChat state pending = do
   parseMsg msg = first errorBundlePretty $ parse p "" msg
    where
     p, pjoin, pmsg :: Parsec Void Text RecvMessage
-    p = (pjoin <|> pmsg) <* eof
+    p = (pjoin <|> pmsg) <* (optional newline >> eof)
     pjoin = do
       digs <- "S," *> (decimal `sepBy` ",")
       case digs of
