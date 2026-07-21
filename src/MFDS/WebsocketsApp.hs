@@ -22,6 +22,13 @@ import System.Environment
 import Text.Megaparsec.Char (newline, space)
 import Text.Megaparsec.Char.Lexer (decimal, signed)
 
+{- | Maximum length of a message in signals.
+
+(Enforced by the client as well - make sure the two values stay in sync.)
+-}
+maxSignals :: Integer
+maxSignals = 2000
+
 data ServerState = ServerState
   { clients :: Map CallSign WS.Connection
   , messages :: [Message]
@@ -180,7 +187,11 @@ runChat state pending = do
         -- Standard join
         [x] -> pure $ SetCallSign (CallSign x) False
         _ -> fail "Invalid join message: expected 1 or 2 signals only"
-    pmsg = fmap Say $ "M," *> (signed space decimal `sepBy` ",")
+    pmsg = do
+      m <- ("M," *> (signed space decimal `sepBy` ","))
+      if length m > fromIntegral maxSignals
+        then fail $ "Message too long: " ++ show (length m) ++ " signals"
+        else pure $ Say m
 
   renderMsg :: SendMessage -> Text
   renderMsg = \case

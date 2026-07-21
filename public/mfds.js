@@ -3,7 +3,10 @@ import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
 import { RenderPixelatedPass } from 'three/addons/postprocessing/RenderPixelatedPass.js';
 import { EffectComposer } from 'three/addons/postprocessing/EffectComposer.js';
 
-// Global constants
+// GLOBAL CONSTANTS
+
+// Max length of a message
+const maxSignals = 2000;
 
 let relayEndpoint = `wss://dscr-relay.dixonary.co.uk`;
 
@@ -22,7 +25,7 @@ const SIGNAL_ENC_DISABLE = -65533;
 const SIGNAL_ENC_SKELETON = -65536;
 
 
-// Global variables
+// GLOBAL VARIABLES
 
 let $ = (x) => document.querySelector(x);
 let $$ = (x) => Array.from(document.querySelectorAll(x));
@@ -1097,9 +1100,7 @@ const parseText = (text) => {
 
   // Must be no invalid signals
   if (invalid.length === 0) {
-    // Max length 
-    const maxSignals = 2000;
-    if (signals.length <= 2000) {
+    if (signals.length <= maxSignals) {
       return signals;
     }
     else {
