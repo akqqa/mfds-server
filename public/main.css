@@ -425,7 +425,7 @@ textarea.dict-paste-contents {
 
       & .message-sequence {
         text-align: right;
-        color: var(--theme-color-dark);
+        color: var(--theme-color-darker);
       }
 
       & .imageButton {
