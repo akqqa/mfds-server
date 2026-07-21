@@ -599,5 +599,5 @@ textarea.dict-paste-contents {
 /* TYPEWRITER */
 
 .Typewriter__wrapper {
-  white-space: pre !important;
+  white-space: pre-line !important;
 }
