@@ -540,38 +540,71 @@ const initialiseCallSign = () => {
 
 const getTranslation = (str) => {
 
+  const formatSpace = (formatMode) => {
+    if (formatMode == 1) {
+      return `<span class="spacer"> </span>`;
+    }
+    else if (formatMode == 2) {
+      return `<span class="line-break"><br></span>`;
+    }
+    else if (formatMode == 3) {
+      return `<span class="line-break"><br></span><span class="line-break"><br></span>`;
+    }
+    else {
+      return ``;
+    }
+  }
+
+  // This is used to compute how big the gap is between the previous and 
+  // current signal. It should usually be the greater of the two.
+  let lastGap = 0;
+
   let newText = str
     .map((x, i) => {
       if (x < 0) {
+        // Signals
         let entry = dict[x];
         if (entry) {
           let p = "";
+          let a = "";
           if (i > 0) {
             const prev = dict[str[i - 1]];
-            const wasUndef = (str[i - 1] < 0 && !prev);
-            if (entry.desc.formatMode > 0 || prev?.desc.formatModeAfter > 0 || wasUndef) {
-              p = `<span class="spacer"> </span>`;
+
+            let formatMode = Math.max(lastGap, entry?.desc?.formatMode);
+
+            p = formatSpace(formatMode);
+
+            if (str[i - 1] === x && entry?.desc?.breakOnDouble && lastGap < 2) {
+              lastGap = 2;
+            }
+            else {
+              lastGap = entry?.desc?.formatModeAfter ?? 0;
             }
           }
+
           const s = `<span class="signal" title="SIGNAL ${x}">${entry.value}</span>`;
           return `${p}${s}`;
         }
         else {
-          // UNDEF is always rendered with a space
-          let p = "";
-          if (i > 0) {
-            p = `<span class="spacer"> </span>`;
-          }
+          // UNDEF is always rendered with a space (for now)
+          let formatMode = Math.max(lastGap, 1);
+          let p = formatSpace(formatMode);
+          lastGap = 1;
           return `${p}<span class="signal undef">@${x}_UNDEF</span>`;
         }
       }
       else {
+        // Numbers
         const prev = dict[str[i - 1]];
         const wasUndef = (str[i - 1] < 0 && !prev);
         let p = "";
-        if (prev?.desc.formatModeAfter > 0 || wasUndef) {
-          p = `<span class="spacer"> </span>`;
-        }
+
+        // Apply no spacing requirements for numbers
+        let formatMode = lastGap;
+        lastGap = 0;
+
+        p = formatSpace(formatMode);
+
         return `${p}<span class="signal number">${x}</span>`;
       }
     })
@@ -629,7 +662,13 @@ const doTranslation = () => {
     const newText = getTranslation(str);
 
     el.innerHTML = newText;
-    const rawText = el.textContent;
+
+    // Get a copy with explicit newlines
+    const clone = el.cloneNode(true);
+    console.log(clone);
+    clone.querySelectorAll("br").forEach(br => { br.replaceWith("\n"); });
+
+    const rawText = clone.textContent;
 
     el.setAttribute("data-status", "done");
 

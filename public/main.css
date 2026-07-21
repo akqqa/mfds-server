@@ -403,7 +403,6 @@ textarea.dict-paste-contents {
       text-shadow: 0 0 0.5ch currentColor;
       flex-grow: 1;
 
-
     }
 
     & .message-aux {
@@ -583,4 +582,10 @@ textarea.dict-paste-contents {
   background-color: black;
   border: 2px solid var(--theme-color-darker);
   border-radius: 0;
+}
+
+/* TYPEWRITER */
+
+.Typewriter__wrapper {
+  white-space: pre !important;
 }
