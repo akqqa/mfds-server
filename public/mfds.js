@@ -133,6 +133,44 @@ const initialiseTheme = () => {
 }
 
 //**************************************************//
+// EXPANDED FORMAT
+
+// Whether to put newlines when rendering messages, if the dictionary says to.
+// We default to rendering things inline, but some people like the newlines.
+let useExpandedFormat = false;
+
+const toggleExpandedFormat = () => {
+  setExpandedFormat(!useExpandedFormat);
+}
+
+const setExpandedFormat = (t) => {
+  console.log(`New expanded format is ${t}`);
+  useExpandedFormat = t;
+
+  if (t) {
+    $("#toggle-expanded-format i").classList.remove("fa-compress");
+    $("#toggle-expanded-format i").classList.add("fa-expand");
+  }
+  else {
+    $("#toggle-expanded-format i").classList.remove("fa-expand");
+    $("#toggle-expanded-format i").classList.add("fa-compress");
+  }
+
+  localStorage.setItem("use-expanded-format", JSON.stringify(useExpandedFormat));
+
+  retranslateAll();
+}
+
+const initialiseExpandedFormat = () => {
+  const oef = localStorage.getItem("use-expanded-format");
+  const oldEF = JSON.parse(oef);
+  if (oldEF) {
+    console.log("EXPANDED FORMAT", oef, oldEF);
+    setExpandedFormat(oldEF);
+  }
+}
+
+//**************************************************//
 // SIDEBAR
 
 let sidebar_visible = false;
@@ -538,9 +576,12 @@ const initialiseCallSign = () => {
 //**************************************************//
 // TRANSLATION
 
-const getTranslation = (str) => {
+const getTranslation = (str, inline = false) => {
 
   const formatSpace = (formatMode) => {
+    // Compress if not in expanded format mode
+    if (formatMode > 1 && (!useExpandedFormat || inline)) formatMode = 1;
+
     if (formatMode == 1) {
       return `<span class="spacer"> </span>`;
     }
@@ -645,6 +686,36 @@ const addTypewriter = (el, fullText, fullHTML) => {
   return n;
 }
 
+
+// Forcibly translate all messages, without typewriting them
+const retranslateAll = () => {
+  const elems = $$(".do-translate");
+
+  console.log(elems.length);
+
+  elems.forEach((mel) => {
+    // Remove the typewriter effect, if it is active
+    const t = mel.getAttribute("data-typewriter");
+    if (t !== undefined && t !== null && typewriters[t]) {
+      typewriters[t].stop();
+      typewriters[t] = null;
+    }
+
+    let str = JSON.parse(mel.getAttribute("data-original"));
+
+    if (!mel.parentNode.parentNode.hasAttribute("data-expanded")) {
+      // Truncate
+      if (str.length > 100) {
+        str = str.slice(0, 100);
+        str.push(-25);
+      }
+    }
+
+    const newText = getTranslation(str);
+    mel.innerHTML = newText;
+  });
+}
+
 const doTranslation = () => {
   const elems = $$(".do-translate");
   elems.forEach((el) => {
@@ -664,13 +735,12 @@ const doTranslation = () => {
       str.push(-25);
     }
 
-    const newText = getTranslation(str);
+    const newText = getTranslation(str, el.hasAttribute("data-inline"));
 
     el.innerHTML = newText;
 
     // Get a copy with explicit newlines
     const clone = el.cloneNode(true);
-    console.log(clone);
     clone.querySelectorAll("br").forEach(br => { br.replaceWith("\n"); });
 
     const rawText = clone.textContent;
@@ -741,7 +811,7 @@ const renderMessage = (sender, sequence, message, encryptionKey) => {
 
   const sel = document.createElement("div");
   sel.classList.add("message-aux");
-  const seqel = document.createElement("p");
+  const seqel = document.createElement("a");
   seqel.classList.add("message-sequence");
   seqel.innerText = ("" + sequence).padStart(3, "0");
 
@@ -803,7 +873,7 @@ const renderMessage = (sender, sequence, message, encryptionKey) => {
       sceneDiv.classList.add("imageScene");
       sceneDiv.style.width = "400px";
       sceneDiv.style.height = "300px";
-      el.appendChild(sceneDiv);
+      vel.appendChild(sceneDiv);
 
       scrollToBottom();
 
@@ -1117,7 +1187,6 @@ const parseSphereData = (message) => {
         // Treat negation and decimals
         if (decimal) {
           currentNumber = parseFloat(`${firstHalf}.${secondHalf}`);
-          console.log("floatparsed " + currentNumber);
         } else {
           currentNumber = firstHalf;
         }
@@ -1375,6 +1444,7 @@ const addTooltips = () => {
   c("#go-to-dsve", "Open Deep Space Visual Editor");
   c("#retheme", "Change Theme");
   c("#mute", "Mute/unmute");
+  c("#toggle-expanded-format", "Toggle expanded format");
   c("#toggle-sidebar", "Toggle sidebar");
 }
 
@@ -1570,6 +1640,12 @@ window.onload = () => {
   $("#retheme").addEventListener("click", () => {
     changeTheme();
   });
+
+  // Setup expanded format
+  initialiseExpandedFormat();
+  $("#toggle-expanded-format").addEventListener("click", () => {
+    toggleExpandedFormat();
+  })
 
   // Setup sidebar show/hide
   initialiseSidebar();

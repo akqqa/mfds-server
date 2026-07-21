@@ -298,22 +298,22 @@ dialog {
 
   }
 
+  & button {
+    border-radius: 0;
+    background-color: black;
+    color: var(--theme-color);
+    font-family: 'Hack', 'Courier New', Courier, monospace;
+    text-transform: uppercase;
+    padding: 0.5ch;
+    padding-bottom: 0.25ch;
+  }
 
-  & div.button-row {
+  & .button-row {
     display: flex;
     justify-content: end;
     border-top: 2px solid var(--theme-color-darker);
     padding: 0.5ch;
 
-    & button {
-      border-radius: 0;
-      background-color: black;
-      color: var(--theme-color);
-      font-family: 'Hack', 'Courier New', Courier, monospace;
-      text-transform: uppercase;
-      padding: 0.5ch;
-      padding-bottom: 0.25ch;
-    }
   }
 }
 
@@ -408,6 +408,10 @@ textarea.dict-paste-contents {
 
     padding: 1ch;
     border-bottom: 1px dashed var(--theme-color);
+
+
+    text-indent: 2ch hanging;
+
 
     & .message-body {
       line-height: 1.3;
@@ -600,4 +604,15 @@ textarea.dict-paste-contents {
 
 .Typewriter__wrapper {
   white-space: pre-line !important;
+}
+
+/* POPPER */
+
+.message-options-popper {
+  position: absolute;
+  background-color: black;
+  border: 2px solid var(--theme-color-darker);
+  border-radius: 0;
+  z-index: 1000;
+  padding: 0.5ch;
 }
