@@ -37,6 +37,7 @@ main {
   grid-template-columns: 15em 1fr;
   grid-template-rows: auto 1fr 3em 3em;
   background-color: black;
+  container-name: page;
 
   &.hide-sidebar {
     grid-template-columns: 0 1fr;
@@ -334,13 +335,24 @@ textarea.dict-paste-contents {
   flex-grow: 1;
 }
 
+
+/* Move icons if header is too small */
+@container page {
+  .header {
+    font-size: min(2em, 5cqw);
+
+    flex-direction: column;
+  }
+}
+
+
 .header {
   grid-area: hdr;
   background-color: var(--theme-color-darker);
   color: black;
   font-family: 'Telematic', 'Courier New', Courier, monospace;
   font-style: italic;
-  font-size: 2em;
+  /* font-size: 2em; */
   display: flex;
   flex-direction: row;
   align-items: center;
