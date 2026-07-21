@@ -12,8 +12,6 @@ category:       Game
 homepage:       https://github.com/dixonary/mfds-server#readme
 bug-reports:    https://github.com/dixonary/mfds-server/issues
 maintainer:     Alex Dixon <alex@dixonary.co.uk>
-license:        BSD3
-license-file:   LICENSE
 build-type:     Simple
 
 source-repository head
@@ -38,6 +36,7 @@ library
     , containers
     , megaparsec
     , text
+    , time
     , wai
     , wai-app-static
     , warp
@@ -60,6 +59,7 @@ executable mfds-server
     , megaparsec
     , mfds-server
     , text
+    , time
     , wai
     , wai-app-static
     , warp

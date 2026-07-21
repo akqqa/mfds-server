@@ -22,6 +22,8 @@ import System.Environment
 import Text.Megaparsec.Char (newline, space)
 import Text.Megaparsec.Char.Lexer (decimal, signed)
 
+import Data.Time
+
 {- | Maximum length of a message in signals.
 
 (Enforced by the client as well - make sure the two values stay in sync.)
@@ -218,6 +220,8 @@ runChat state pending = do
     forM_ clients $ send $ Msg m
     modifyMVar_ state $ \s@ServerState{messages} -> pure s{messages = m : take 9 messages}
 
+    logMessage m
+
   sendHistory :: WS.Connection -> IO ()
   sendHistory conn = do
     ServerState{messages} <- readMVar state
@@ -231,6 +235,23 @@ runChat state pending = do
 
   send :: SendMessage -> WS.Connection -> IO ()
   send msg conn = WS.sendTextData conn (renderMsg msg)
+
+  logMessage :: Message -> IO ()
+  logMessage (Message{author, messageNumber, content}) = do
+    now <- getCurrentTime
+    let
+      msgText :: Text
+      msgText =
+        Text.intercalate
+          ","
+          [ Text.pack $
+              formatTime defaultTimeLocale "%Y-%m-%d %H:%M:%S" now
+          , renderCallSign' author
+          , Text.justifyRight 3 '0' (Text.pack $ show messageNumber)
+          , mconcat . List.intersperse "," $
+              map (Text.pack . show) content
+          ]
+    Text.appendFile "messages.log" (msgText <> "\n")
 
 ----------
 -- Helpers

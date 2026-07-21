@@ -24,6 +24,7 @@ dependencies:
   - wai
   - wai-app-static
   - warp
+  - time
 
 library:
   source-dirs: src
